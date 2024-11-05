@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  mysql:
+    container_name: db_storyhub
+    image: mysql:8.0.38
+    restart: always
+    ports:
+      - '3307:3306'
+    environment:
+      - MYSQL_DATABASE=storyhub
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - mynetwork
+volumes:
+  db:
+  rabbitmq_data:
+
+networks:
+  mynetwork:
+    driver: bridge
+# docker compose -p storyhub up -d
