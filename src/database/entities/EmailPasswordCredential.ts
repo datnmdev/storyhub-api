@@ -1,21 +1,21 @@
-import {Column,Entity,JoinColumn,OneToOne} from "typeorm";
-import {Account} from './Account'
+import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
+import { Account } from './Account';
 
+@Entity('email_password_credential', { schema: 'storyhub' })
+export class EmailPasswordCredential {
+	@PrimaryColumn('int', { primary: true, name: 'id' })
+	id: number;
 
-@Entity("email_password_credential" ,{schema:"storyhub" } )
-export  class EmailPasswordCredential {
+	@Column('varchar', { name: 'email', length: 255 })
+	email: string;
 
-@Column("int",{ primary:true,name:"id" })
-id:number;
+	@Column('varchar', { name: 'password', length: 500 })
+	password: string;
 
-@Column("varchar",{ name:"email",length:255 })
-email:string;
-
-@Column("varchar",{ name:"password",length:500 })
-password:string;
-
-@OneToOne(()=>Account,account=>account.emailPasswordCredential,{ onDelete:"NO ACTION",onUpdate:"NO ACTION" })
-@JoinColumn([{ name: "id", referencedColumnName: "id" },
-])account:Account;
-
+	@OneToOne(() => Account, (account) => account.emailPasswordCredential, {
+		onDelete: 'NO ACTION',
+		onUpdate: 'NO ACTION',
+	})
+	@JoinColumn([{ name: 'id', referencedColumnName: 'id' }])
+	account: Account;
 }

@@ -1,18 +1,18 @@
-import {Column,Entity,JoinColumn,OneToOne} from "typeorm";
-import {Account} from './Account'
+import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
+import { Account } from './Account';
 
+@Entity('google_credential', { schema: 'storyhub' })
+export class GoogleCredential {
+	@PrimaryColumn('int', { primary: true, name: 'id' })
+	id: number;
 
-@Entity("google_credential" ,{schema:"storyhub" } )
-export  class GoogleCredential {
+	@Column('varchar', { name: 'uid', length: 255 })
+	uid: string;
 
-@Column("int",{ primary:true,name:"id" })
-id:number;
-
-@Column("varchar",{ name:"uid",length:255 })
-uid:string;
-
-@OneToOne(()=>Account,account=>account.googleCredential,{ onDelete:"NO ACTION",onUpdate:"NO ACTION" })
-@JoinColumn([{ name: "id", referencedColumnName: "id" },
-])account:Account;
-
+	@OneToOne(() => Account, (account) => account.googleCredential, {
+		onDelete: 'NO ACTION',
+		onUpdate: 'NO ACTION',
+	})
+	@JoinColumn([{ name: 'id', referencedColumnName: 'id' }])
+	account: Account;
 }

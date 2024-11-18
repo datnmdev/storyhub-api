@@ -1,27 +1,37 @@
-import {Column,Entity,JoinColumn,OneToMany,OneToOne} from "typeorm";
-import {Genre} from './Genre'
-import {User} from './User'
-import {WithdrawRequest} from './WithdrawRequest'
+import {
+	Column,
+	Entity,
+	JoinColumn,
+	OneToMany,
+	OneToOne,
+	PrimaryColumn,
+} from 'typeorm';
+import { Genre } from './Genre';
+import { User } from './User';
+import { Moderator } from './Moderator';
+import { WithdrawRequest } from './WithdrawRequest';
 
+@Entity('manager', { schema: 'storyhub' })
+export class Manager {
+	@PrimaryColumn('int', { primary: true, name: 'id' })
+	id: number;
 
-@Entity("manager" ,{schema:"storyhub" } )
-export  class Manager {
+	@OneToMany(() => Genre, (genre) => genre.creator)
+	genres: Genre[];
 
-@Column("int",{ primary:true,name:"id" })
-id:number;
+	@OneToOne(() => User, (user) => user.manager, {
+		onDelete: 'NO ACTION',
+		onUpdate: 'NO ACTION',
+	})
+	@JoinColumn([{ name: 'id', referencedColumnName: 'id' }])
+	user: User;
 
-@OneToMany(()=>Genre,genre=>genre.creator)
+	@OneToMany(() => Moderator, (moderator) => moderator.manager)
+	moderators: Moderator[];
 
-
-genres:Genre[];
-
-@OneToOne(()=>User,user=>user.manager,{ onDelete:"NO ACTION",onUpdate:"NO ACTION" })
-@JoinColumn([{ name: "id", referencedColumnName: "id" },
-])user:User;
-
-@OneToMany(()=>WithdrawRequest,withdrawRequest=>withdrawRequest.processor)
-
-
-withdrawRequests:WithdrawRequest[];
-
+	@OneToMany(
+		() => WithdrawRequest,
+		(withdrawRequest) => withdrawRequest.processor,
+	)
+	withdrawRequests: WithdrawRequest[];
 }

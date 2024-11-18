@@ -1,39 +1,44 @@
-import {Column,Entity,JoinColumn,OneToMany,OneToOne} from "typeorm";
-import {User} from './User'
-import {BankAccount} from './BankAccount'
-import {ModerationRequest} from './ModerationRequest'
-import {Story} from './Story'
-import {WithdrawRequest} from './WithdrawRequest'
+import {
+	Column,
+	Entity,
+	JoinColumn,
+	OneToMany,
+	OneToOne,
+	PrimaryColumn,
+} from 'typeorm';
+import { User } from './User';
+import { BankAccount } from './BankAccount';
+import { ModerationRequest } from './ModerationRequest';
+import { Story } from './Story';
+import { WithdrawRequest } from './WithdrawRequest';
 
+@Entity('author', { schema: 'storyhub' })
+export class Author {
+	@PrimaryColumn('int', { primary: true, name: 'id' })
+	id: number;
 
-@Entity("author" ,{schema:"storyhub" } )
-export  class Author {
+	@OneToOne(() => User, (user) => user.author, {
+		onDelete: 'NO ACTION',
+		onUpdate: 'NO ACTION',
+	})
+	@JoinColumn([{ name: 'id', referencedColumnName: 'id' }])
+	user: User;
 
-@Column("int",{ primary:true,name:"id" })
-id:number;
+	@OneToOne(() => BankAccount, (bankAccount) => bankAccount.author)
+	bankAccount: BankAccount;
 
-// @OneToOne(()=>User,user=>user.author,{ onDelete:"NO ACTION",onUpdate:"NO ACTION" })
-// @JoinColumn([{ name: "id", referencedColumnName: "id" },
-// ])user:User;
+	@OneToMany(
+		() => ModerationRequest,
+		(moderationRequest) => moderationRequest.requester,
+	)
+	moderationRequests: ModerationRequest[];
 
-@OneToOne(()=>BankAccount,bankAccount=>bankAccount.author)
+	@OneToMany(() => Story, (story) => story.author)
+	stories: Story[];
 
-
-bankAccount:BankAccount;
-
-@OneToMany(()=>ModerationRequest,moderationRequest=>moderationRequest.requester)
-
-
-moderationRequests:ModerationRequest[];
-
-@OneToMany(()=>Story,story=>story.author)
-
-
-stories:Story[];
-
-@OneToMany(()=>WithdrawRequest,withdrawRequest=>withdrawRequest.requester)
-
-
-withdrawRequests:WithdrawRequest[];
-
+	@OneToMany(
+		() => WithdrawRequest,
+		(withdrawRequest) => withdrawRequest.requester,
+	)
+	withdrawRequests: WithdrawRequest[];
 }
