@@ -22,6 +22,7 @@ import { FailedSignInException } from '@/common/exceptions/failed-login.exceptio
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UnauthorizedException } from '@/common/exceptions/unauthorized.exception';
+import { SignOutDto } from './dto/sign-out.dto';
 
 @Injectable()
 export class AuthService {
@@ -140,5 +141,18 @@ export class AuthService {
 		}
 
 		throw new UnauthorizedException();
+	}
+
+	async signOut(signOutDto: SignOutDto) {
+		try {
+			await this.redisClient
+				.multi()
+				.del(KeyGenerator.accessTokenKey(signOutDto.accessToken))
+				.del(KeyGenerator.refreshTokenKey(signOutDto.refreshToken))
+				.exec();
+			return true;
+		} catch (error) {
+			return false;
+		}
 	}
 }
