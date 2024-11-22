@@ -21,7 +21,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import path from 'path';
 
-@@Module({
+@Module({
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
