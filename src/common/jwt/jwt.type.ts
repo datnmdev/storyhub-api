@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import { jwtAccessTokenConfig, jwtRefreshTokenConfig } from './jwt.config';
 
 export type JwtAccessTokenConfig = ReturnType<typeof jwtAccessTokenConfig>;
@@ -10,9 +9,8 @@ export class Token {
 }
 
 export class JwtPayload {
-	@Expose()
 	accountId: number;
 	role: number;
 	status: number;
-	iat: number = Date.now();
+	iat: number;
 }

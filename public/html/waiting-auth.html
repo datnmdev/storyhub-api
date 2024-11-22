@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đang chờ xác thực</title>
+</head>
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+</style>
+<body>
+    <div style="width: 100vw;height: 100vh;display: flex;justify-content: center;align-items: center;flex-direction: column;">
+        <img 
+            width="120"
+            src="/public/icons/gifs/beauty-loading.gif"
+            alt="Loading"
+        />
+        <div style="margin-top: 8px;text-shadow: 0 0 0.5px black; animation: fadeIn 2.5s linear 0.5s infinite both;">Đang tiến hành xác thực. Vui lòng đợi trong giây lát...</div>
+    </div>
+</body>
+</html>

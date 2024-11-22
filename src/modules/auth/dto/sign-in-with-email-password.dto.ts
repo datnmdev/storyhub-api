@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
-export class EmailPasswordCredentialDto {
+export class SignInWithEmailPasswordDto {
 	@IsNotEmpty()
 	@IsString()
 	@IsEmail()
