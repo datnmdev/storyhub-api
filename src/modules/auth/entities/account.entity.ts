@@ -6,7 +6,6 @@ import {
 	ManyToOne,
 	OneToOne,
 	PrimaryColumn,
-	PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { EmailPasswordCredential } from './email-password-credential.entity';

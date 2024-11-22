@@ -1,20 +1,35 @@
-import { Body, Controller, Headers, Post } from '@nestjs/common';
-import { EmailPasswordCredentialDto } from './dto/email-password-credential.dto';
+import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import { SignInWithEmailPasswordDto } from './dto/sign-in-with-email-password.dto';
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SignOutDto } from './dto/sign-out.dto';
 
 @Controller('auth')
 export class AuthController {
-	constructor(private readonly authService: AuthService) {}
+	constructor(private readonly authService: AuthService) { }
 
 	@Post('sign-in/email-password')
-	async loginWithEmailPassword(
-		@Body() emailPasswordCredentialDto: EmailPasswordCredentialDto,
+	async signInWithEmailPassword(
+		@Body() signInWithEmailPasswordDto: SignInWithEmailPasswordDto,
 	) {
-		return await this.authService.loginWithEmailPassword(
-			emailPasswordCredentialDto,
-		);;
+		return await this.authService.signInWithEmailPassword(
+			signInWithEmailPasswordDto,
+		);
+	}
+
+	@Get('sign-in/google')
+	async signInWithGoogle() {
+		return await this.authService.signInWithGoogle();
+	}
+
+	@Get('sign-in/google/callback')
+	async signInWithGoogleCallback(@Query() query: ParameterDecorator) {
+		return await this.authService.signInWithGoogleCallback(query);
+	}
+
+	@Get('sign-in/google/get-token')
+	async getTokenAfterOAuth(@Query("state") state: string) {
+		return await this.authService.getTokenAfterOAuth(state);
 	}
 
 	@Post('validate-token')
