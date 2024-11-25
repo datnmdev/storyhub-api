@@ -39,6 +39,9 @@ import { JobName } from '@/common/constants/bull.constants';
 import randomString from 'randomstring';
 import { SendOtpData } from '@/common/types/mail.type';
 import { ResendOtpDto } from './dto/resend-otp.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import crypto from 'crypto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -458,10 +461,69 @@ export class AuthService {
 					break;
 
 				case OtpVerificationType.FORGOT_PASSWORD:
-
+					const jobData: SendOtpData = {
+						accountId: emailPasswordCredential.account.id,
+						otp: randomString.generate({
+							length: 6,
+							charset: "numeric"
+						}),
+						to: emailPasswordCredential.email
+					};
+					await this.bullService.addJob(JobName.SEND_OTP_TO_RESET_PASSWORD, jobData);
 					break;
 			}
 		}
 		return true;
+	}
+
+	async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+		try {
+			const emailPasswordCredential = await this.emailPasswordCredentitalRepository.findOne({
+				where: {
+					email: forgotPasswordDto.email
+				},
+				relations: [
+					"account"
+				]
+			})
+			if (emailPasswordCredential) {
+				const otp = await this.redisClient.get(KeyGenerator.otpToResetPasswordKey(emailPasswordCredential.account.id));
+				if (forgotPasswordDto.otp === otp) {
+					await this.redisClient.del(KeyGenerator.otpToResetPasswordKey(emailPasswordCredential.account.id));
+					const result = {
+						accountId: emailPasswordCredential.account.id,
+						state: crypto.randomBytes(256).toString("hex")
+					}
+					await this.redisClient.setEx(KeyGenerator.stateToResetPasswordKey(emailPasswordCredential.account.id), 5 * 60, result.state);
+					return result;
+				}
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	async resetPassword(resetPasswordDto: ResetPasswordDto) {
+		const queryRunner = this.dataSource.createQueryRunner();
+		await queryRunner.connect();
+		try {
+			await queryRunner.startTransaction();
+			const state = await this.redisClient.get(KeyGenerator.stateToResetPasswordKey(resetPasswordDto.accountId));
+			if (resetPasswordDto.state === state) {
+				await queryRunner.manager.update(EmailPasswordCredential, resetPasswordDto.accountId, {
+					password: await bcrypt.hash(resetPasswordDto.newPassword, 10)
+				})
+				await this.redisClient.del(KeyGenerator.stateToResetPasswordKey(resetPasswordDto.accountId));
+				await queryRunner.commitTransaction();
+				return true;
+			}
+			return false;
+		} catch (error) {
+			await queryRunner.rollbackTransaction();
+			return false;
+		} finally {
+			await queryRunner.release();
+		}
 	}
 }

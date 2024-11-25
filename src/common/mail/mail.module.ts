@@ -3,29 +3,37 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
 import path from 'path';
 import { MailService } from './mail.service';
+import { ConfigService } from '../config/config.service';
 
 @Module({
   imports: [
-    MailerModule.forRoot({
-      transport: {
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: 'datnm.ptit@gmail.com',
-            pass: 'bjtrukcmyhqiedia'
+    MailerModule.forRootAsync({
+      useFactory(configService: ConfigService) {
+        return {
+          transport: {
+            host: configService.getMailerConfig().host,
+            port: configService.getMailerConfig().port,
+            secure: true,
+            auth: {
+              user: configService.getMailerConfig().user,
+              pass: configService.getMailerConfig().password
+            }
+          },
+          defaults: {
+            from: '"No Reply" <no-reply@storyhub.com>',
+          },
+          template: {
+            dir: path.join(process.cwd(), "src/assets/templates"),
+            adapter: new EjsAdapter(),
+            options: {
+              strict: true,
+            },
+          },
         }
       },
-      defaults: {
-        from: '"No Reply" <no-reply@storyhub.com>',
-      },
-      template: {
-        dir: path.join(process.cwd(), "src/assets/templates"),
-        adapter: new EjsAdapter(),
-        options: {
-          strict: true,
-        },
-      },
+      inject: [
+        ConfigService
+      ]
     }),
   ],
   providers: [
@@ -35,4 +43,4 @@ import { MailService } from './mail.service';
     MailService
   ]
 })
-export class MailModule {}
+export class MailModule { }

@@ -1,9 +1,9 @@
 import { Number } from "aws-sdk/clients/iot";
-import { IsNotEmpty, IsNumber, IsString, Length } from "class-validator";
+import { IsNotEmpty, IsNumber, IsNumberString, IsString, Length } from "class-validator";
 
 export class VerifyAccountDto {
     @IsNotEmpty()
-    @IsString()
+    @IsNumberString()
     @Length(6)
     otp: string
 

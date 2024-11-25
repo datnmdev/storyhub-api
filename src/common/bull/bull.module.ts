@@ -8,16 +8,25 @@ import { RedisModule } from '../redis/redis.module';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from "@bull-board/express";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
+import { ConfigService } from '../config/config.service';
 
 @Module({
     imports: [
-        _BullModule.forRoot({
-            redis: {
-                host: 'redis-12227.c80.us-east-1-2.ec2.redns.redis-cloud.com',
-                port: 12227,
-                password: 'TNBzyWOw2HNZuyqmGRjUezqL1Hw3j1Wp',
+        _BullModule.forRootAsync({
+            useFactory: (configService: ConfigService) => {
+                return {
+                    
+                    redis: {
+                        host: configService.getRedisConfig().host,
+                        port: configService.getRedisConfig().port,
+                        password: configService.getRedisConfig().password,
+                    },
+                    prefix: "bull"
+                }
             },
-            prefix: "bull:"
+            inject: [
+                ConfigService
+            ]
         }),
         _BullModule.registerQueue({
             name: QueueName.MAIL,

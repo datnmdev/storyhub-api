@@ -7,6 +7,8 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { ValidateEmailDto } from './dto/validate-email.dto';
 import { VerifyAccountDto } from './dto/verify-account.dto';
 import { ResendOtpDto } from './dto/resend-otp.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -69,5 +71,15 @@ export class AuthController {
 	@Post("resend-otp")
 	resendOtp(@Body() resendOtpDto: ResendOtpDto) {
 		return this.authService.resendOtp(resendOtpDto);
+	}
+
+	@Post("forgot-password")
+	forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+		return this.authService.forgotPassword(forgotPasswordDto);
+	}
+
+	@Post("reset-password")
+	resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+		return this.authService.resetPassword(resetPasswordDto);
 	}
 }
