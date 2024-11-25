@@ -24,7 +24,7 @@ export class User {
 	name: string;
 
 	@Column('date', { name: 'dob', nullable: true })
-	dob: string | null;
+	dob: Date | null;
 
 	@Column('int', {
 		name: 'gender',

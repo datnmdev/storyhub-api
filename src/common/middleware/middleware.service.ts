@@ -5,6 +5,7 @@ import { RedisClient } from '../redis/redis.type';
 import KeyGenerator from '../utils/generate-key.util';
 import { JwtService } from '../jwt/jwt.service';
 import { UnauthorizedException } from '../exceptions/unauthorized.exception';
+import { AccountStatus } from '../constants/account.constants';
 
 @Injectable()
 export class AuthorizationMiddleware implements NestMiddleware {
@@ -22,8 +23,11 @@ export class AuthorizationMiddleware implements NestMiddleware {
 				KeyGenerator.accessTokenKey(accessToken),
 			));
 			if (!isAccessTokenExpired) {
-				req.user = this.jwtService.decode(accessToken);
-				return next();
+				const payload = this.jwtService.decode(accessToken);
+				if (payload.status === AccountStatus.ACTIVATED) {
+					req.user = payload;
+					return next();
+				}
 			}
 		}
 

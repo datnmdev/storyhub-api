@@ -3,47 +3,71 @@ import { SignInWithEmailPasswordDto } from './dto/sign-in-with-email-password.dt
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SignOutDto } from './dto/sign-out.dto';
+import { SignUpDto } from './dto/sign-up.dto';
+import { ValidateEmailDto } from './dto/validate-email.dto';
+import { VerifyAccountDto } from './dto/verify-account.dto';
+import { ResendOtpDto } from './dto/resend-otp.dto';
 
 @Controller('auth')
 export class AuthController {
 	constructor(private readonly authService: AuthService) { }
 
 	@Post('sign-in/email-password')
-	async signInWithEmailPassword(
+	signInWithEmailPassword(
 		@Body() signInWithEmailPasswordDto: SignInWithEmailPasswordDto,
 	) {
-		return await this.authService.signInWithEmailPassword(
+		return this.authService.signInWithEmailPassword(
 			signInWithEmailPasswordDto,
 		);
 	}
 
 	@Get('sign-in/google')
-	async signInWithGoogle() {
-		return await this.authService.signInWithGoogle();
+	signInWithGoogle() {
+		return this.authService.signInWithGoogle();
 	}
 
 	@Get('sign-in/google/callback')
-	async signInWithGoogleCallback(@Query() query: ParameterDecorator) {
-		return await this.authService.signInWithGoogleCallback(query);
+	signInWithGoogleCallback(@Query() query: ParameterDecorator) {
+		return this.authService.signInWithGoogleCallback(query);
 	}
 
 	@Get('sign-in/google/get-token')
-	async getTokenAfterOAuth(@Query("state") state: string) {
-		return await this.authService.getTokenAfterOAuth(state);
+	getTokenAfterOAuth(@Query("state") state: string) {
+		return this.authService.getTokenAfterOAuth(state);
 	}
 
 	@Post('validate-token')
-	async validateToken(@Headers("Authorization") authorization: string) {
-		return await this.authService.validateToken(authorization);
+	validateToken(@Headers("Authorization") authorization: string) {
+		return this.authService.validateToken(authorization);
 	}
 
 	@Post('refresh-token')
-	async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-		return await this.authService.refreshToken(refreshTokenDto);
+	refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+		return this.authService.refreshToken(refreshTokenDto);
 	}
 
 	@Post('sign-out')
-	async signOut(@Body() signOutDto: SignOutDto) {
-		return await this.authService.signOut(signOutDto);
+	signOut(@Body() signOutDto: SignOutDto) {
+		return this.authService.signOut(signOutDto);
+	}
+
+	@Post("sign-up")
+	signUp(@Body() signUpDto: SignUpDto) {
+		return this.authService.signUp(signUpDto);
+	}
+
+	@Get("validate-email")
+	validateEmail(@Query() validateEmailDto: ValidateEmailDto) {
+		return this.authService.validateEmail(validateEmailDto.email);
+	}
+
+	@Post("verify-account")
+	verifyAccount(@Body() verifyAccountDto: VerifyAccountDto) {
+		return this.authService.verifyAccount(verifyAccountDto);
+	}
+
+	@Post("resend-otp")
+	resendOtp(@Body() resendOtpDto: ResendOtpDto) {
+		return this.authService.resendOtp(resendOtpDto);
 	}
 }

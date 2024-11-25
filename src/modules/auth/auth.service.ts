@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository, Transaction } from 'typeorm';
 import { SignInWithEmailPasswordDto } from './dto/sign-in-with-email-password.dto';
 import { EmailPasswordCredential } from './entities/email-password-credential.entity';
 import bcrypt from 'bcrypt';
@@ -23,25 +23,33 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UnauthorizedException } from '@/common/exceptions/unauthorized.exception';
 import { SignOutDto } from './dto/sign-out.dto';
 import { v6 as uuidV6 } from 'uuid';
-import { OAuthStatus } from '@/common/constants/oauth.constants';
+import { OAuthStatus, OtpVerificationType } from '@/common/constants/oauth.constants';
 import axios from 'axios';
-import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 import { Account } from './entities/account.entity';
 import { GoogleCredential } from './entities/google-credential.entity';
 import { AccountStatus, AuthType, Role } from '@/common/constants/account.constants';
 import { OAuthState } from '@/common/types/auth.type';
 import FileLoaderUtils from '@/common/utils/file-loader.util';
+import { SignUpDto } from './dto/sign-up.dto';
+import { Reader } from '../reader/entities/reader.entity';
+import { VerifyAccountDto } from './dto/verify-account.dto';
+import { BullService } from '@/common/bull/bull.service';
+import { JobName } from '@/common/constants/bull.constants';
+import randomString from 'randomstring';
+import { SendOtpData } from '@/common/types/mail.type';
+import { ResendOtpDto } from './dto/resend-otp.dto';
 
 @Injectable()
 export class AuthService {
 	constructor(
+		private readonly dataSource: DataSource,
 		@InjectRepository(EmailPasswordCredential)
-		private readonly emailPasswordRepository: Repository<EmailPasswordCredential>,
-		@InjectRepository(Account)
-		private readonly accountRepository: Repository<Account>,
+		private readonly emailPasswordCredentitalRepository: Repository<EmailPasswordCredential>,
 		@InjectRepository(GoogleCredential)
 		private readonly googleCredentialRepository: Repository<GoogleCredential>,
+		@InjectRepository(Account)
+		private readonly accountRepository: Repository<Account>,
 		private readonly jwtService: JwtService,
 		@Inject(REDIS_CLIENT)
 		private readonly redisClient: RedisClient,
@@ -49,14 +57,14 @@ export class AuthService {
 		private readonly accessTokenConfig: JwtAccessTokenConfig,
 		@Inject(JWT_REFRESH_TOKEN_CONFIG)
 		private readonly refreshTokenConfig: JwtRefreshTokenConfig,
-		private readonly userService: UserService
+		private readonly bullService: BullService
 	) { }
 
 	async signInWithEmailPassword(
 		signInWithEmailPasswordDto: SignInWithEmailPasswordDto,
 	) {
 		// Kiểm tra tài khoản của địa chỉ email được yêu cầu đến có tồn tại hay không?
-		const credential = await this.emailPasswordRepository.findOne({
+		const credential = await this.emailPasswordCredentitalRepository.findOne({
 			where: {
 				email: signInWithEmailPasswordDto.email,
 			},
@@ -78,20 +86,34 @@ export class AuthService {
 
 				const newToken = this.jwtService.generateToken(payload);
 
-				// Ghi lại phiên đăng nhập vào redis
-				await this.redisClient
-					.multi()
-					.setEx(
-						KeyGenerator.accessTokenKey(newToken.accessToken),
-						this.accessTokenConfig.expiresIn,
-						newToken.accessToken,
-					)
-					.setEx(
-						KeyGenerator.refreshTokenKey(newToken.refreshToken),
-						this.refreshTokenConfig.expiresIn,
-						newToken.refreshToken,
-					)
-					.exec();
+				// Kiểm tra tài khoản đã kích hoạt chưa
+				if (credential.account.status === AccountStatus.ACTIVATED) {
+					// Ghi lại phiên đăng nhập vào redis
+					await this.redisClient
+						.multi()
+						.setEx(
+							KeyGenerator.accessTokenKey(newToken.accessToken),
+							this.accessTokenConfig.expiresIn,
+							newToken.accessToken,
+						)
+						.setEx(
+							KeyGenerator.refreshTokenKey(newToken.refreshToken),
+							this.refreshTokenConfig.expiresIn,
+							newToken.refreshToken,
+						)
+						.exec();
+				} else if (credential.account.status === AccountStatus.UNACTIVATED) {
+					// Gửi mã xác thực với tài khoản chưa xác thực
+					const jobData: SendOtpData = {
+						accountId: credential.account.id,
+						otp: randomString.generate({
+							length: 6,
+							charset: "numeric"
+						}),
+						to: credential.email
+					};
+					await this.bullService.addJob(JobName.SEND_OTP_TO_VERIFY_ACCOUNT, jobData);
+				}
 
 				return newToken;
 			}
@@ -122,7 +144,8 @@ export class AuthService {
 
 	async signInWithGoogleCallback(query: ParameterDecorator) {
 		const { code, state } = query as any;
-		const queryRunner = this.googleCredentialRepository.manager.connection.createQueryRunner();
+		const queryRunner = this.dataSource.createQueryRunner();
+		await queryRunner.connect();
 		try {
 			// Kiểm tra quá trình xác thực và uỷ quyền còn có hiệu lực không
 			const isStateExpired = (JSON.parse(await this.redisClient.get(KeyGenerator.googleOauthStateKey(state))) as OAuthState).status != OAuthStatus.PENDING;
@@ -159,7 +182,13 @@ export class AuthService {
 						name: userInfo.name,
 						avatar: userInfo?.picture
 					} as User)
-					const newUser = await this.userService.create(userEntity);
+					const newUser = await queryRunner.manager.save(userEntity);
+
+					// Tạo và lưu reader
+					const readerEnity = plainToInstance(Reader, {
+						id: newUser.id
+					} as Reader)
+					await queryRunner.manager.save(readerEnity);
 
 					// Tạo và lưu tài khoản mới cho user
 					const accountEntity = plainToInstance(Account, {
@@ -169,14 +198,14 @@ export class AuthService {
 						status: AccountStatus.ACTIVATED,
 						authType: AuthType.GOOGLE
 					} as Account)
-					const newAccount = await this.accountRepository.save(accountEntity);
+					const newAccount = await queryRunner.manager.save(accountEntity);
 
 					// Tạo và lưu google credential mới cho tài khoản
 					const googleCredentialEntity = plainToInstance(GoogleCredential, {
 						id: newAccount.id,
 						uid: userInfo.id
 					} as GoogleCredential)
-					await this.googleCredentialRepository.save(googleCredentialEntity);
+					await queryRunner.manager.save(googleCredentialEntity);
 
 					// Thực hiện commit transaction
 					await queryRunner.commitTransaction();
@@ -227,7 +256,6 @@ export class AuthService {
 				await this.redisClient.set(KeyGenerator.googleOauthStateKey(state), JSON.stringify(oAuthState), { KEEPTTL: true });
 			}
 		} catch (error) {
-			console.log(error);
 			// Thực hiện rollback transaction
 			await queryRunner.rollbackTransaction();
 
@@ -237,6 +265,7 @@ export class AuthService {
 			}
 			await this.redisClient.set(KeyGenerator.googleOauthStateKey(state), JSON.stringify(oAuthState), { KEEPTTL: true });
 		} finally {
+			await queryRunner.release();
 			return await FileLoaderUtils.loadHtmlFile('waiting-auth.html');
 		}
 	}
@@ -314,5 +343,125 @@ export class AuthService {
 		} catch (error) {
 			return false;
 		}
+	}
+
+	async signUp(signUpDto: SignUpDto) {
+		const queryRunner = this.dataSource.createQueryRunner();
+		await queryRunner.connect();
+		try {
+			await queryRunner.startTransaction();
+			const userEntity = plainToInstance(User, {
+				name: signUpDto.name,
+				dob: signUpDto.dob,
+				gender: signUpDto.gender,
+				phone: signUpDto.phone
+			} as User)
+			const newUser = await queryRunner.manager.save(userEntity);
+
+			const readerEnity = plainToInstance(Reader, {
+				id: newUser.id
+			} as Reader)
+			await queryRunner.manager.save(readerEnity);
+
+			const accountEntity = plainToInstance(Account, {
+				id: newUser.id,
+				roleId: signUpDto.type,
+				status: AccountStatus.UNACTIVATED,
+				authType: AuthType.EMAIL_PASSWORD
+			} as Account)
+			const newAccount = await queryRunner.manager.save(accountEntity);
+
+			const emailPasswordCredentialEntity = plainToInstance(EmailPasswordCredential, {
+				id: newAccount.id,
+				email: signUpDto.email,
+				password: await bcrypt.hash(signUpDto.password, 10)
+			} as EmailPasswordCredential)
+			await queryRunner.manager.save(emailPasswordCredentialEntity);
+			const jobData: SendOtpData = {
+				accountId: newAccount.id,
+				otp: randomString.generate({
+					length: 6,
+					charset: "numeric"
+				}),
+				to: signUpDto.email
+			};
+			await this.bullService.addJob(JobName.SEND_OTP_TO_VERIFY_ACCOUNT, jobData);
+			await queryRunner.commitTransaction();
+			return newAccount;
+		} catch (error) {
+			await queryRunner.rollbackTransaction();
+			throw error;
+		} finally {
+			await queryRunner.release();
+		}
+	}
+
+	async validateEmail(email: string) {
+		const emailPasswordCredential = await this.emailPasswordCredentitalRepository.findOne(({
+			where: {
+				email
+			}
+		}))
+		if (emailPasswordCredential) {
+			return true;
+		}
+		return false;
+	}
+
+	async verifyAccount(verifyAccountDto: VerifyAccountDto) {
+		const queryRunner = this.dataSource.createQueryRunner();
+		await queryRunner.connect();
+		try {
+			await queryRunner.startTransaction();
+			const otp = await this.redisClient.get(KeyGenerator.otpToVerifyAccountKey(verifyAccountDto.accountId));
+			if (verifyAccountDto.otp === otp) {
+				await queryRunner.manager.update(Account, verifyAccountDto.accountId, {
+					status: AccountStatus.ACTIVATED
+				})
+				await this.redisClient.del(KeyGenerator.otpToVerifyAccountKey(verifyAccountDto.accountId));
+				await queryRunner.commitTransaction();
+				return true;
+			}
+			return false;
+		} catch (error) {
+			await queryRunner.rollbackTransaction();
+			return false;
+		} finally {
+			await queryRunner.release();
+		}
+	}
+
+	async resendOtp(resendOtpDto: ResendOtpDto) {
+		const emailPasswordCredential = await this.emailPasswordCredentitalRepository.findOne({
+			where: {
+				email: resendOtpDto.email
+			},
+			relations: [
+				"account"
+			]
+		})
+		if (emailPasswordCredential) {
+			switch (resendOtpDto.type) {
+				case OtpVerificationType.SIGN_IN:
+				case OtpVerificationType.SIGN_UP:
+					if (emailPasswordCredential.account.status === AccountStatus.UNACTIVATED) {
+						const jobData: SendOtpData = {
+							accountId: emailPasswordCredential.account.id,
+							otp: randomString.generate({
+								length: 6,
+								charset: "numeric"
+							}),
+							to: emailPasswordCredential.email
+						};
+						await this.bullService.addJob(JobName.SEND_OTP_TO_VERIFY_ACCOUNT, jobData);
+					}
+					break;
+
+				case OtpVerificationType.FORGOT_PASSWORD:
+
+					break;
+			}
+		}
+		return true;
 	}
 }

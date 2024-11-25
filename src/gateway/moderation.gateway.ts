@@ -14,7 +14,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 
-@WebSocketGateway(3001, { cors: true })
+@WebSocketGateway(Number(process.env.PORT_WS) || 3000, { cors: true, namespace: "websocket" })
 export class ModerationGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -25,7 +25,7 @@ export class ModerationGateway
     private readonly moderationRequestService: ModerationRequestService,
     private readonly storyService: StoryService,
   ) {
-    console.log('Websocket server is running on port 3001');
+    console.log(`Websocket server is running on port ${process.env.PORT_WS}`);
   }
 
   afterInit(socket: Socket): any {
