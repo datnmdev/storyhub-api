@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { StoryModule } from './modules/story/story.module';
 import { AliasModule } from './modules/alias/alias.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
@@ -23,13 +22,11 @@ import path from 'path';
 import { ReaderModule } from './modules/reader/reader.module';
 import { MailModule } from './common/mail/mail.module';
 import { BullModule } from './common/bull/bull.module';
+import { ConfigModule } from './common/config/config.module';
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({
-			isGlobal: true,
-			envFilePath: [`.env.dev`],
-		}),
+		ConfigModule,
 		ServeStaticModule.forRoot({
 			rootPath: path.join(process.cwd(), 'public'),
 			serveRoot: '/public',

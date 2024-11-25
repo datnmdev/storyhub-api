@@ -14,7 +14,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 
-@WebSocketGateway(Number(process.env.PORT_WS) || 3000, { cors: true, namespace: "websocket" })
+@WebSocketGateway(Number(process.env.PORT_WS), { cors: true, namespace: "websocket" })
 export class ModerationGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
