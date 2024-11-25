@@ -16,8 +16,4 @@ export class UserService {
 		});
 		return profile;
 	}
-
-	async create(userEntity: User) {
-		return await this.userRepository.save(userEntity);
-	}
 }

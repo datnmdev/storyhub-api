@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateModerationRequestDto } from './dto/create-moderation-request.dto';
 import { ModerationRequest } from '@/database/entities/ModerationRequest';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from '@/database/entities/Account';
-import { CustomNotFoundException } from '@/errors/error-codes.enum';
 
 @Injectable()
 export class ModerationRequestService {
@@ -55,7 +54,7 @@ export class ModerationRequestService {
       where: { id },
     });
     if (!req) {
-      throw new CustomNotFoundException('Moderation request not found!');
+      throw new NotFoundException('Moderation request not found!');
     }
     return req;
   }

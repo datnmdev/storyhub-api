@@ -20,6 +20,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import path from 'path';
+import { ReaderModule } from './modules/reader/reader.module';
+import { MailModule } from './common/mail/mail.module';
+import { BullModule } from './common/bull/bull.module';
 
 @Module({
 	imports: [
@@ -58,9 +61,12 @@ import path from 'path';
 		}),
 		JwtModule,
 		MiddlewareModule,
+		BullModule,
+		MailModule,
 		AuthModule,
 		UserModule,
-  ],
+		ReaderModule,
+	],
 })
 export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

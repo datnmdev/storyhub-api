@@ -1,12 +1,15 @@
 const KeyGenerator = {
 	accessTokenKey: (accessToken: string) => {
-		return `token:access-token:${accessToken}`;
+		return `auth:token:access-token:${accessToken}`;
 	},
 	refreshTokenKey: (refreshToken: string) => {
-		return `token:refresh-token:${refreshToken}`;
+		return `auth:token:refresh-token:${refreshToken}`;
 	},
 	googleOauthStateKey: (state: string) => {
-		return `oauth:google:state:${state}`;
+		return `auth:google:state:${state}`;
+	},
+	otpToVerifyAccountKey: (accountId: number) => {
+		return `auth:verify-account:${accountId}`
 	}
 };
 

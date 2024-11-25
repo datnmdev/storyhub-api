@@ -4,7 +4,6 @@ import { UpdateStoryDto } from './dto/update-story.dto';
 import { Like, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Story } from '@/database/entities/Story';
-import { CustomNotFoundException } from '@/errors/error-codes.enum';
 import { Genre } from '@/database/entities/Genre';
 import { PaginateDTO } from '@/pagination/create-paginated.dto';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
