@@ -13,20 +13,20 @@ export class CreateModerationRequestDto {
 
   @IsDate()
   @IsOptional()
-  processAt: Date | null;
+  processAt?: Date;
 
   @IsInt()
   @IsOptional()
-  storyId: number | null;
+  storyId?: number;
 
   @IsInt()
   @IsOptional()
-  chapterId: number | null;
+  chapterId?: number;
 
   @IsInt()
   requesterId: number;
 
   @IsInt()
   @IsOptional()
-  responserId: number | null;
+  responserId?: number;
 }

@@ -24,6 +24,8 @@ import { MailModule } from './common/mail/mail.module';
 import { BullModule } from './common/bull/bull.module';
 import { ConfigModule } from './common/config/config.module';
 
+import { NotificationUserModule } from './modules/notification-user/notification-user.module';
+import { NotificationModule } from './modules/notification/notification.module';
 @Module({
 	imports: [
 		ConfigModule,
@@ -63,7 +65,9 @@ import { ConfigModule } from './common/config/config.module';
 		AuthModule,
 		UserModule,
 		ReaderModule,
-	],
+		NotificationUserModule,
+		NotificationModule,
+  ],
 })
 export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

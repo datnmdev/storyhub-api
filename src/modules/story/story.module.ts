@@ -7,9 +7,12 @@ import { AliasModule } from '../alias/alias.module';
 import { Genre } from '@/database/entities/Genre';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Story, Genre]), AliasModule],
-  controllers: [StoryController],
-  providers: [StoryService],
-  exports: [StoryService]
+	imports: [
+		TypeOrmModule.forFeature([Story, Genre]),
+		AliasModule,
+	],
+	controllers: [StoryController],
+	providers: [StoryService],
+	exports: [StoryService],
 })
 export class StoryModule {}

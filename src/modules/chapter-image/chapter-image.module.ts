@@ -8,6 +8,6 @@ import { ChapterImage } from '@/database/entities/ChapterImage';
   imports: [TypeOrmModule.forFeature([ChapterImage])],
   controllers: [ChapterImageController],
   providers: [ChapterImageService],
-  exports: [ChapterImageService]
+  exports: [ChapterImageService],
 })
 export class ChapterImageModule {}

@@ -1,112 +1,133 @@
 import { Injectable } from '@nestjs/common';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
-import { Like, Not, Repository } from 'typeorm';
+import { IsNull, Like, Not, Repository, Connection } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Story } from '@/database/entities/Story';
 import { Genre } from '@/database/entities/Genre';
-import { PaginateDTO } from '@/pagination/create-paginated.dto';
+import { PaginateStoriesDTO } from '@/pagination/paginated-stories.dto';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
 
 @Injectable()
 export class StoryService {
-  constructor(
-    @InjectRepository(Story)
-    private readonly storyRepository: Repository<Story>,
+	constructor(
+		@InjectRepository(Story)
+		private readonly storyRepository: Repository<Story>,
+		@InjectRepository(Genre)
+		private readonly genreRepository: Repository<Genre>,
+		private readonly connection: Connection,
+	) {}
+	async create(createStoryDto: CreateStoryDto): Promise<Story> {
+		const queryRunner = this.connection.createQueryRunner();
+		await queryRunner.connect();
+		await queryRunner.startTransaction();
+		try {
+			const genres = await this.genreRepository.findByIds(
+				createStoryDto.genres || [],
+			);
+			const newStory = this.storyRepository.create({
+				...createStoryDto,
+				genres,
+			});
+			await queryRunner.manager.save(newStory);
+			await queryRunner.commitTransaction();
+			return newStory;
+		} catch (err) {
+			await queryRunner.rollbackTransaction();
+			throw err;
+		} finally {
+			await queryRunner.release();
+		}
+	}
 
-    @InjectRepository(Genre)
-    private readonly genreRepository: Repository<Genre>,
-  ) {}
-  async create(createStoryDto: CreateStoryDto): Promise<Story> {
-    const genres = await this.genreRepository.findByIds(createStoryDto.genres || []);
-    const newStory = this.storyRepository.create({ ...createStoryDto, genres });
-    return await this.storyRepository.save(newStory);
-  }
+	async findAll(query: PaginateStoriesDTO): Promise<IPaginatedType<Story>> {
+		const take = query.take || 10;
+		const page = query.page || 1;
+		const skip = (page - 1) * take;
+		const keyword = query.keyword?.trim() || '';
+		const authorId = query.authorId;
+		const status = query.status;
+		const type = query.type;
+		// Điều kiện tìm kiếm
+		let whereCondition = {
+			...(authorId ? { authorId: authorId } : {}),
+			...(keyword ? { title: Like(`%${keyword}%`) } : {}),
+			...(type ? { type: type } : {}),
+			status: status !== undefined && status !== null ? status : Not(6),
+		};
 
-  async findAll(query: PaginateDTO): Promise<IPaginatedType<Story>> {
-    const take = query.take || 10;
-    const page = query.page || 1;
-    const skip = (page - 1) * take;
-    const keyword = query.keyword?.trim() || '';
+		const [result, totalCount] = await this.storyRepository.findAndCount({
+			where: whereCondition,
+			order: { title: 'DESC' },
+			take: take,
+			skip: skip,
+			select: [
+				'id',
+				'title',
+				'description',
+				'note',
+				'coverImage',
+				'type',
+				'status',
+				'createdAt',
+				'updatedAt',
+			],
+			relations: ['aliases', 'country', 'author.user'],
+		});
 
-    // Điều kiện tìm kiếm
-    const whereCondition = {
-      status: Not(6), // Trạng thái không được bằng 6
-      ...(keyword ? { title: Like(`%${keyword}%`) } : {}),
-    };
+		// Tính toán các thông tin phân trang
+		const totalPages = Math.ceil(totalCount / take);
+		const hasNextPage = page < totalPages;
+		const hasPreviousPage = page > 1;
 
-    const [result, totalCount] = await this.storyRepository.findAndCount({
-      where: whereCondition,
-      order: { title: 'DESC' },
-      take: take,
-      skip: skip,
-      select: [
-        'id',
-        'title',
-        'description',
-        'note',
-        'coverImage',
-        'type',
-        'status',
-        'createdAt',
-        'updatedAt',
-      ],
-      relations: ['aliases', 'country', 'author.user'],
-    });
+		const startCursor = result.length > 0 ? result[0].id.toString() : null;
+		const endCursor =
+			result.length > 0 ? result[result.length - 1].id.toString() : null;
 
-    // Tính toán các thông tin phân trang
-    const totalPages = Math.ceil(totalCount / take);
-    const hasNextPage = page < totalPages;
-    const hasPreviousPage = page > 1;
+		const edges = result.map((story) => ({
+			cursor: story.id,
+			node: story,
+		}));
+		// Trả về định dạng IPaginatedType<Story>
+		return {
+			edges,
+			totalCount,
+			hasNextPage,
+			hasPreviousPage,
+			startCursor,
+			endCursor,
+		};
+	}
 
-    const startCursor = result.length > 0 ? result[0].id.toString() : null;
-    const endCursor =
-      result.length > 0 ? result[result.length - 1].id.toString() : null;
+	async findOne(id: number): Promise<Story> {
+		const story = await this.storyRepository.findOne({
+			where: { id },
+			relations: ['aliases', 'genres', 'country', 'author.user'],
+		});
+		if (!story) {
+			throw new Error(`Story with ID ${id} not found`);
+		}
+		return story;
+	}
 
-    const edges = result.map((story) => ({
-      cursor: story.id,
-      node: story,
-    }));
-    // Trả về định dạng IPaginatedType<Story>
-    return {
-      edges,
-      totalCount,
-      hasNextPage,
-      hasPreviousPage,
-      startCursor,
-      endCursor,
-    };
-  }
+	async update(updateStoryDto: UpdateStoryDto): Promise<Story> {
+		// Tìm Story cần cập nhật
+		const story = await this.findOne(updateStoryDto.id);
 
-  async findOne(id: number): Promise<Story> {
-    const story = await this.storyRepository.findOne({
-      where: { id },
-      relations: ['aliases', 'genres', 'country', 'author.user'],
-    });
-    if (!story) {
-      throw new Error(`Story with ID ${id} not found`);
-    }
-    return story;
-  }
+		Object.assign(story, updateStoryDto);
+		await this.storyRepository.save(story);
 
-  async update(updateStoryDto: UpdateStoryDto): Promise<Story> {
-    // Tìm Story cần cập nhật
-    const story = await this.findOne(updateStoryDto.id);
+		return await this.findOne(updateStoryDto.id);
+	}
 
-    Object.assign(story, updateStoryDto);
-    await this.storyRepository.save(story);
+	// Hàm xóa story
+	async remove(id: number): Promise<string> {
+		// Tìm story theo ID
+		const story = await this.findOne(id);
 
-    return story;
-  }
+		// Cập nhật trạng thái story
+		await this.storyRepository.update({ id: id }, { status: 6 });
 
-  // Hàm xóa story
-  async remove(id: number): Promise<string> {
-    // Tìm story theo ID
-    const story = await this.findOne(id);
-
-    // Cập nhật trạng thái story
-    await this.storyRepository.update({ id: id }, { status: 6 });
-
-    return `This action removes a #${id} story`;
-  }
+		return `This action removes a #${id} story`;
+	}
 }

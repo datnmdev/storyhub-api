@@ -3,63 +3,46 @@ import { CreateModerationRequestDto } from './dto/create-moderation-request.dto'
 import { ModerationRequest } from '@/database/entities/ModerationRequest';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Account } from '@/database/entities/Account';
 
 @Injectable()
 export class ModerationRequestService {
-  constructor(
-    @InjectRepository(ModerationRequest)
-    private readonly moderationReqRepository: Repository<ModerationRequest>,
-    @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>,
-  ) {}
-  async createModorationReq(
-    createModerationRequestDto: CreateModerationRequestDto,
-  ): Promise<ModerationRequest> {
-    const moderatorAccount = await this.accountRepository.findOne({
-      where: {
-        status: 1,
-        role: {
-          name: 'moderator',
-        },
-      },
-      relations: ['role'],
-    });
+	constructor(
+		@InjectRepository(ModerationRequest)
+		private readonly moderationReqRepository: Repository<ModerationRequest>,
+	) {}
+	async createModorationReq(
+		createModerationRequestDto: CreateModerationRequestDto,
+	): Promise<ModerationRequest> {
+		return await this.moderationReqRepository.save(
+			createModerationRequestDto,
+		);
+	}
 
-    if (!moderatorAccount) {
-      throw new Error('No active moderator account found.');
-    }
+	findAll() {
+		return `This action returns all moderationRequest`;
+	}
+	async update(id: number, status: number): Promise<ModerationRequest> {
+		// Tìm moderation request cần cập nhật
+		await this.findOne(id);
 
-    createModerationRequestDto.responserId = moderatorAccount.id;
+		await this.moderationReqRepository.update(
+			{ id: id },
+			{ status: status },
+		);
 
-    const newReq = this.moderationReqRepository.create(
-      createModerationRequestDto,
-    );
-    return await this.moderationReqRepository.save(newReq);
-  }
+		return await this.findOne(id);
+	}
+	async findOne(id: number): Promise<ModerationRequest> {
+		const req = await this.moderationReqRepository.findOne({
+			where: { id },
+		});
+		if (!req) {
+			throw new NotFoundException('Moderation request not found!');
+		}
+		return req;
+	}
 
-  findAll() {
-    return `This action returns all moderationRequest`;
-  }
-  async update(id: number, status: number): Promise<String> {
-    // Tìm moderation request cần cập nhật
-    const req = await this.findOne(id);
-
-    await this.moderationReqRepository.update({ id: id }, { status: status });
-
-    return 'Update moderation request success!';
-  }
-  async findOne(id: number): Promise<ModerationRequest> {
-    const req = await this.moderationReqRepository.findOne({
-      where: { id },
-    });
-    if (!req) {
-      throw new NotFoundException('Moderation request not found!');
-    }
-    return req;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} moderationRequest`;
-  }
+	remove(id: number) {
+		return `This action removes a #${id} moderationRequest`;
+	}
 }

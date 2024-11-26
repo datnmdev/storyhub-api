@@ -1,34 +1,23 @@
 version: '3.8'
 
 services:
-  storyhub_db:
-    container_name: storyhub_db
-    restart: always
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: 12345678
-      MYSQL_DATABASE: storyhub
-      MYSQL_USER: datnmptit
-      MYSQL_PASSWORD: 12345678
-    ports:
-      - "33061:3306"
-    volumes:
-      - storyhub_db:/var/lib/mysql
-    networks:
-      - my_network
-
-  redis:
-    container_name: storyhub-redis
-    image: redis:latest
-    restart: always
-    ports:
-      - "16379:6379"
-    networks:
-      - my_network
+    storyhub_db:
+        container_name: storyhub_db
+        restart: always
+        image: mysql:8.0.38
+        environment:
+            MYSQL_DATABASE: storyhub
+            MYSQL_ROOT_PASSWORD: 12345678
+        ports:
+            - '3307:3306'
+        volumes:
+            - storyhub_db:/var/lib/mysql
+        networks:
+            - my_network
 
 volumes:
-  storyhub_db:
+    storyhub_db:
 
 networks:
-  my_network:
-    driver: bridge
+    my_network:
+        driver: bridge
