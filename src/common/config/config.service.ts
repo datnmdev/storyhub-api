@@ -42,4 +42,14 @@ export class ConfigService {
             port: Number(this.nestConfigService.get('PORT_WS'))
         }
     }
+
+    getVnpConfig() {
+        return {
+            vnpTmnCode: this.nestConfigService.get('VNP_TMN_CODE'),
+            vnpHashSecret: this.nestConfigService.get('VNP_HASH_SECRET'),
+            vnpUrl: this.nestConfigService.get('VNP_URL'),
+            vnpApi: this.nestConfigService.get('VNP_API'),
+            vnpReturnUrl: this.nestConfigService.get('VNP_RETURN_URL')
+        }
+    }
 }

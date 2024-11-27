@@ -10,9 +10,9 @@ export class UserService {
 		private readonly userRepository: Repository<User>,
 	) {}
 
-	async getProfile(accountId: number) {
+	async getProfile(userId: number) {
 		const profile = await this.userRepository.findOneBy({
-			id: accountId,
+			id: userId,
 		});
 		return profile;
 	}

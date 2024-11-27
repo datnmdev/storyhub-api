@@ -9,6 +9,7 @@ export class Token {
 }
 
 export class JwtPayload {
+	userId: number;
 	accountId: number;
 	role: number;
 	status: number;
