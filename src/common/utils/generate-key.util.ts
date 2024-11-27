@@ -16,7 +16,10 @@ const KeyGenerator = {
 	},
 	stateToResetPasswordKey: (accountId: number) => {
 		return `auth:reset-password:state:${accountId}`
-	} 
+	} ,
+	paymentStatusKey: (orderId: string) => {
+		return `payment:deposite-transaction:${orderId}`
+	}
 };
 
 export default KeyGenerator;

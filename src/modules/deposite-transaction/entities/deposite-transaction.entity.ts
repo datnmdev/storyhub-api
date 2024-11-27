@@ -1,3 +1,5 @@
+import { Notification } from "@/database/entities/Notification";
+import { Reader } from "@/modules/reader/entities/reader.entity";
 import {
 	Column,
 	Entity,
@@ -7,8 +9,6 @@ import {
 	OneToMany,
 	PrimaryGeneratedColumn,
 } from "typeorm";
-import { Reader } from "./Reader";
-import { Notification } from "./Notification";
 
 @Index("FK_depositeTransaction_reader_idx", ["readerId"], {})
 @Entity("deposite_transaction", { schema: "storyhub" })
@@ -21,6 +21,9 @@ export class DepositeTransaction {
 
 	@Column("text", { name: "bank_trans_no", nullable: true })
 	bankTransNo: string | null;
+
+	@Column("varchar", { name: "order_id", length: 100 })
+	orderId: string;
 
 	@Column("varchar", { name: "bank_code", length: 255 })
 	bankCode: string;

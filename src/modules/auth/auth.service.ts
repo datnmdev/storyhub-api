@@ -71,7 +71,10 @@ export class AuthService {
 			where: {
 				email: signInWithEmailPasswordDto.email,
 			},
-			relations: ['account'],
+			relations: [
+				'account',
+				'account.user'
+			],
 		});
 		if (credential) {
 			// Kiểm tra mật khẩu có khớp hay không?
@@ -81,6 +84,7 @@ export class AuthService {
 			);
 			if (checkPassword) {
 				const payload = plainToInstance(JwtPayload, {
+					userId: credential.account.user.id,
 					accountId: credential.account.id,
 					role: credential.account.roleId,
 					status: credential.account.status,
@@ -173,7 +177,8 @@ export class AuthService {
 						uid: userInfo.id
 					},
 					relations: [
-						"account"
+						"account",
+						"account.user"
 					]
 				})
 				if (!googleCredential) {
@@ -215,6 +220,7 @@ export class AuthService {
 
 					// Tạo token mới
 					payload = plainToInstance(JwtPayload, {
+						userId: newUser.id,
 						accountId: newAccount.id,
 						status: newAccount.status,
 						role: newAccount.roleId,
@@ -224,6 +230,7 @@ export class AuthService {
 
 				// Tạo token mới
 				payload = plainToInstance(JwtPayload, {
+					userId: googleCredential.account.user.id,
 					accountId: googleCredential.id,
 					status: googleCredential.account.status,
 					role: googleCredential.account.roleId,
@@ -274,7 +281,11 @@ export class AuthService {
 	}
 
 	async getTokenAfterOAuth(state: string) {
-		return JSON.parse(await this.redisClient.get(KeyGenerator.googleOauthStateKey(state))) as OAuthState
+		const oAuthState: OAuthState = JSON.parse(await this.redisClient.get(KeyGenerator.googleOauthStateKey(state)));
+		if (oAuthState.token) {
+			await this.redisClient.del(KeyGenerator.googleOauthStateKey(state));
+		}
+		return oAuthState;
 	}
 
 	async validateToken(authorization: string) {

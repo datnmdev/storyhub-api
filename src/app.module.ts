@@ -23,6 +23,9 @@ import { ReaderModule } from './modules/reader/reader.module';
 import { MailModule } from './common/mail/mail.module';
 import { BullModule } from './common/bull/bull.module';
 import { ConfigModule } from './common/config/config.module';
+import { WalletModule } from './modules/wallet/wallet.module';
+import { GuardModule } from './common/guards/guard.module';
+import { DepositeTransactionModule } from './modules/deposite-transaction/deposite-transaction.module';
 
 import { NotificationUserModule } from './modules/notification-user/notification-user.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -62,17 +65,25 @@ import { NotificationModule } from './modules/notification/notification.module';
 		MiddlewareModule,
 		BullModule,
 		MailModule,
+		GuardModule,
 		AuthModule,
 		UserModule,
 		ReaderModule,
 		NotificationUserModule,
 		NotificationModule,
-  ],
+		WalletModule,
+		DepositeTransactionModule
+	],
 })
 export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
 			.apply(AuthorizationMiddleware)
-			.forRoutes("auth/sign-out", "user");
+			.forRoutes(
+				"auth/sign-out",
+				"user",
+				"wallet",
+				"deposite-transaction/create-payment-url"
+			);
 	}
 }
