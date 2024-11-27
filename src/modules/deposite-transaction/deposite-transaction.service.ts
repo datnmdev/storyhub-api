@@ -20,6 +20,7 @@ import { Wallet } from "../wallet/entities/Wallet.entity";
 import FileLoaderUtils from "@/common/utils/file-loader.util";
 import KeyGenerator from "@/common/utils/generate-key.util";
 import { GetPaymentStatusDto } from "./dto/get-payment-status.dto";
+import { GetDepositeTransHistoryDto } from "./dto/get-deposite-transaction-history.dto";
 
 @Injectable()
 export class DepositeTransactionService {
@@ -185,5 +186,15 @@ export class DepositeTransactionService {
     async getPaymentStatus(getPaymentStatusDto: GetPaymentStatusDto) {
         const paymentStatus = await this.redisClient.get(KeyGenerator.paymentStatusKey(getPaymentStatusDto.orderId));
         return paymentStatus;
+    }
+
+    getDepositeTransHistory(userId: number, getDepositeTransHistoryDto: GetDepositeTransHistoryDto) {
+        return this.depositeTransactionRepository.findAndCount({
+            where: {
+                readerId: userId
+            },
+            take: getDepositeTransHistoryDto.limit,
+            skip: (getDepositeTransHistoryDto.page - 1) * getDepositeTransHistoryDto.limit
+        })
     }
 }
