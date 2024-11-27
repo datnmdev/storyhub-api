@@ -7,6 +7,8 @@ import { Roles } from "@/common/decorators/roles.decorator";
 import { Role } from "@/common/constants/account.constants";
 import { HandleVnpayIpnDto } from "./dto/handle-vnpay-ipn.dto";
 import { GetPaymentStatusDto } from "./dto/get-payment-status.dto";
+import { User } from "@/common/decorators/user.decorator";
+import { GetDepositeTransHistoryDto } from "./dto/get-deposite-transaction-history.dto";
 
 @Controller('deposite-transaction')
 export class DepositeTransactionController {
@@ -38,7 +40,16 @@ export class DepositeTransactionController {
     }
 
     @Get('get-payment-status')
+    @Roles(Role.READER)
+    @UseGuards(RolesGuard)
     getPaymentStatus(@Query() getPaymentStatusDto: GetPaymentStatusDto) {
         return this.depositeTransactionService.getPaymentStatus(getPaymentStatusDto);
+    }
+
+    @Get('get-deposite-transaction-history')
+    @Roles(Role.READER)
+    @UseGuards(RolesGuard)
+    getDepositeTransHistory(@User('userId') userId: number, @Query() getDepositeTransHistoryDto: GetDepositeTransHistoryDto) {
+        return this.depositeTransactionService.getDepositeTransHistory(userId, getDepositeTransHistoryDto);
     }
 }
