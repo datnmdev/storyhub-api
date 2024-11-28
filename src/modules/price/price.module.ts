@@ -8,5 +8,6 @@ import { Price } from '@/database/entities/Price';
   imports: [TypeOrmModule.forFeature([Price])],
   controllers: [PriceController],
   providers: [PriceService],
+  exports: [PriceService],
 })
 export class PriceModule {}

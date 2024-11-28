@@ -18,21 +18,21 @@ export class AliasController {
 
   @Post()
   async createAlias(@Body() createAliasDto: CreateAliasDto[]): Promise<Alias[]> {
-    return this.aliasService.create(createAliasDto);
+    return await this.aliasService.create(createAliasDto);
   }
 
   @Get()
-  async findAll() {
-    return this.aliasService.findAll();
+  async findAll(): Promise<Alias[]> {
+    return await this.aliasService.findAll();
   }
 
   @Put()
-  async update(@Body() updateAliasDto: UpdateAliasDto[]) {
-    return this.aliasService.update(updateAliasDto);
+  async update(@Body() updateAliasDto: UpdateAliasDto[]): Promise<Alias[]> {
+    return await this.aliasService.update(updateAliasDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.aliasService.remove(+id);
+  async remove(@Param('id') id: string): Promise<string> {
+    return await this.aliasService.remove(+id);
   }
 }

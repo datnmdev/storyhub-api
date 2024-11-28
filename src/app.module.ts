@@ -17,7 +17,6 @@ import { AuthorizationMiddleware } from './common/middleware/middleware.service'
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import path from 'path';
 import { ReaderModule } from './modules/reader/reader.module';
 import { MailModule } from './common/mail/mail.module';
@@ -29,22 +28,13 @@ import { DepositeTransactionModule } from './modules/deposite-transaction/deposi
 
 import { NotificationUserModule } from './modules/notification-user/notification-user.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { CountryModule } from './modules/country/country.module';
 @Module({
 	imports: [
 		ConfigModule,
 		ServeStaticModule.forRoot({
 			rootPath: path.join(process.cwd(), 'public'),
 			serveRoot: '/public',
-		}),
-		TypeOrmModule.forRoot({
-			type: 'mysql',
-			host: process.env.HOST_DB,
-			port: Number(process.env.PORT_DB),
-			username: process.env.USERNAME_DB,
-			password: process.env.PASSWORD_DB,
-			database: process.env.DB_NAME,
-			entities: ['dist/**/entities/*.js'],
-			synchronize: false,
 		}),
 		DatabaseModule,
 		StoryModule,
@@ -72,7 +62,8 @@ import { NotificationModule } from './modules/notification/notification.module';
 		NotificationUserModule,
 		NotificationModule,
 		WalletModule,
-		DepositeTransactionModule
+		DepositeTransactionModule,
+		CountryModule,
 	],
 })
 export class AppModule implements NestModule {
@@ -80,12 +71,12 @@ export class AppModule implements NestModule {
 		consumer
 			.apply(AuthorizationMiddleware)
 			.forRoutes(
-				"auth/sign-out",
-				"user",
-				"wallet",
-				"deposite-transaction/create-payment-url",
-				"deposite-transaction/get-payment-status",
-				"deposite-transaction/get-deposite-transaction-history"
+				'auth/sign-out',
+				'user',
+				'wallet',
+				'deposite-transaction/create-payment-url',
+				'deposite-transaction/get-payment-status',
+				'deposite-transaction/get-deposite-transaction-history',
 			);
 	}
 }

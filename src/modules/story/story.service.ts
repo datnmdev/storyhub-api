@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
-import { IsNull, Like, Not, Repository, Connection } from 'typeorm';
+import { IsNull, Like, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Story } from '@/database/entities/Story';
 import { Genre } from '@/database/entities/Genre';
@@ -15,29 +15,16 @@ export class StoryService {
 		private readonly storyRepository: Repository<Story>,
 		@InjectRepository(Genre)
 		private readonly genreRepository: Repository<Genre>,
-		private readonly connection: Connection,
 	) {}
 	async create(createStoryDto: CreateStoryDto): Promise<Story> {
-		const queryRunner = this.connection.createQueryRunner();
-		await queryRunner.connect();
-		await queryRunner.startTransaction();
-		try {
-			const genres = await this.genreRepository.findByIds(
-				createStoryDto.genres || [],
-			);
-			const newStory = this.storyRepository.create({
-				...createStoryDto,
-				genres,
-			});
-			await queryRunner.manager.save(newStory);
-			await queryRunner.commitTransaction();
-			return newStory;
-		} catch (err) {
-			await queryRunner.rollbackTransaction();
-			throw err;
-		} finally {
-			await queryRunner.release();
-		}
+		const genres = await this.genreRepository.findByIds(
+			createStoryDto.genres || [],
+		);
+		const newStory = this.storyRepository.create({
+			...createStoryDto,
+			genres,
+		});
+		return await this.storyRepository.save(newStory);
 	}
 
 	async findAll(query: PaginateStoriesDTO): Promise<IPaginatedType<Story>> {
@@ -58,7 +45,7 @@ export class StoryService {
 
 		const [result, totalCount] = await this.storyRepository.findAndCount({
 			where: whereCondition,
-			order: { title: 'DESC' },
+			order: { createdAt: 'DESC' },
 			take: take,
 			skip: skip,
 			select: [
@@ -72,7 +59,7 @@ export class StoryService {
 				'createdAt',
 				'updatedAt',
 			],
-			relations: ['aliases', 'country', 'author.user'],
+			relations: ['aliases', 'country', 'author.user', 'prices', 'genres'],
 		});
 
 		// Tính toán các thông tin phân trang
@@ -102,7 +89,7 @@ export class StoryService {
 	async findOne(id: number): Promise<Story> {
 		const story = await this.storyRepository.findOne({
 			where: { id },
-			relations: ['aliases', 'genres', 'country', 'author.user'],
+			relations: ['aliases', 'country', 'author.user', 'genres'],
 		});
 		if (!story) {
 			throw new Error(`Story with ID ${id} not found`);

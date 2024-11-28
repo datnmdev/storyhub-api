@@ -1,39 +1,58 @@
+import { Genre } from '@/database/entities/Genre';
 import { CreateGenreDto } from '@/modules/genre/dto/create-genre.dto';
-import { IsNotEmpty, IsInt, IsOptional, IsString, IsDate } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsInt,
+	IsOptional,
+	IsString,
+	IsDate,
+	IsNumberString,
+  IsObject,
+} from 'class-validator';
 
 export class CreateStoryDto {
-  @IsNotEmpty()
-  @IsString()
-  title: string;
+	@IsNotEmpty()
+	@IsString()
+	title: string;
 
-  @IsNotEmpty()
-  @IsString()
-  description: string;
+	@IsNotEmpty()
+	@IsString()
+	description: string;
 
-  @IsOptional()
-  @IsString()
-  note?: string;
+	@IsOptional()
+	@IsString()
+	note?: string;
 
-  @IsNotEmpty()
-  @IsString()
-  coverImage: string;
+	@IsOptional()
+	@IsString()
+	coverImage?: string;
 
-  @IsNotEmpty()
-  @IsInt()
-  type: number;
+	@IsNotEmpty()
+	@IsInt()
+	type: number;
 
-  @IsNotEmpty()
-  @IsInt()
-  status: number;
+	@IsNotEmpty()
+	@IsInt()
+	status: number;
 
-  @IsNotEmpty()
-  @IsInt()
-  countryId: number;
+	@IsNotEmpty()
+	@IsInt()
+	countryId: number;
 
-  @IsNotEmpty()
-  @IsInt()
-  authorId: number;
+	@IsNotEmpty()
+	@IsInt()
+	authorId: number;
 
-  @IsOptional()
-  genres?: number[];
+	@IsOptional()
+	genres?: number[];
+
+	@IsOptional()
+	alias?: string;
+
+	@IsOptional()
+	@IsObject()
+	price?: {
+		amount: string;
+		startTime: string;
+	};
 }

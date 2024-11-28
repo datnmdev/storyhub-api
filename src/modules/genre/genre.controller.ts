@@ -17,14 +17,14 @@ export class GenreController {
   constructor(private readonly genreService: GenreService) {}
 
   @Post()
-  create(@Body() createGenreDto: CreateGenreDto[]): Promise<Genre[]> {
-    return this.genreService.create(createGenreDto);
-  }
+  async create(@Body() createGenreDto: CreateGenreDto[]): Promise<Genre[]> {
+    return await this.genreService.create(createGenreDto);
+	}
 
-  @Get()
-  findAll() {
-    return this.genreService.findAll();
-  }
+	@Get()
+	async findAll(): Promise<Genre[]> {
+		return await this.genreService.findAll();
+	}
 
   @Get(':id')
   findOne(@Param('id') id: string) {

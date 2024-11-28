@@ -1,11 +1,13 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Put,
+  Query,
 } from '@nestjs/common';
 import { ChapterImageService } from './chapter-image.service';
 import { CreateChapterImageDto } from './dto/create-chapter-image.dto';
@@ -14,35 +16,37 @@ import { ChapterImage } from '@/database/entities/ChapterImage';
 
 @Controller('chapter-image')
 export class ChapterImageController {
-  constructor(private readonly chapterImageService: ChapterImageService) {}
+	constructor(private readonly chapterImageService: ChapterImageService) {}
 
-  @Post()
-  async create(
-    @Body() createChapterImageDto: CreateChapterImageDto,
-  ): Promise<ChapterImage> {
-    return await this.chapterImageService.create(createChapterImageDto);
-  }
+	@Post()
+	async createChapterImage(
+		@Body() createChapterImageDto: CreateChapterImageDto[],
+	): Promise<ChapterImage[]> {
+		return await this.chapterImageService.create(createChapterImageDto);
+	}
 
-  @Get()
-  async findAll(): Promise<ChapterImage[]> {
-    return await this.chapterImageService.findAll();
-  }
+	@Get('all')
+	async findAll(
+		@Query('chapterId') chapterId: string,
+	): Promise<ChapterImage[]> {
+		console.log(chapterId);
+		return await this.chapterImageService.findAll(chapterId);
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chapterImageService.findOne(+id);
-  }
+	@Get(':id')
+	async findOne(@Param('id') id: string): Promise<ChapterImage> {
+		return await this.chapterImageService.findOne(+id);
+	}
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateChapterImageDto: UpdateChapterImageDto,
-  ) {
-    return this.chapterImageService.update(+id, updateChapterImageDto);
-  }
+	@Put(':id')
+	async update(
+		@Body() updateChapterImageDto: UpdateChapterImageDto[],
+	): Promise<ChapterImage[]> {
+		return await this.chapterImageService.update(updateChapterImageDto);
+	}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chapterImageService.remove(+id);
-  }
+	@Delete(':id')
+	async remove(@Param('id') id: string): Promise<string> {
+		return await this.chapterImageService.remove(+id);
+	}
 }

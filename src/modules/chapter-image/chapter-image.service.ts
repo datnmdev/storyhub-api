@@ -7,30 +7,45 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class ChapterImageService {
-  constructor(
-    @InjectRepository(ChapterImage)
-    private readonly chapterImageRepository: Repository<ChapterImage>,
-  ) {}
+	constructor(
+		@InjectRepository(ChapterImage)
+		private readonly chapterImageRepository: Repository<ChapterImage>,
+	) {}
 
-  async create(
-    createChapterImageDto: CreateChapterImageDto,
-  ): Promise<ChapterImage> {
-    return await this.chapterImageRepository.save(createChapterImageDto);
-  }
+	async create(
+		createChapterImageDto: CreateChapterImageDto[],
+	): Promise<ChapterImage[]> {
+		return await this.chapterImageRepository.save(createChapterImageDto);
+	}
 
-  async findAll(): Promise<ChapterImage[]> {
-    return await this.chapterImageRepository.find();
-  }
+	async findAll(chapterId: string): Promise<ChapterImage[]> {
+		const images = await this.chapterImageRepository.find({
+			where: { chapterId: +chapterId },
+			order: {
+				order: 'ASC',
+			},
+		});
+		return images.length > 0 ? images : [];
+	}
 
-  findOne(id: number) {
-    return `This action returns a #${id} chapterImage`;
-  }
+	async findOne(id: number): Promise<ChapterImage> {
+		const chapterImage = await this.chapterImageRepository.findOne({
+			where: { id },
+		});
+		if (!chapterImage) {
+			throw new Error(`ChapterImage with ID ${id} not found`);
+		}
+		return chapterImage;
+	}
 
-  update(id: number, updateChapterImageDto: UpdateChapterImageDto) {
-    return `This action updates a #${id} chapterImage`;
-  }
+	async update(
+		updateChapterImageDto: UpdateChapterImageDto[],
+	): Promise<ChapterImage[]> {
+		return await this.chapterImageRepository.save(updateChapterImageDto);
+	}
 
-  remove(id: number) {
-    return `This action removes a #${id} chapterImage`;
-  }
+	async remove(id: number): Promise<string> {
+		await this.chapterImageRepository.delete(id);
+		return `This action removes a #${id} chapterImage`;
+	}
 }

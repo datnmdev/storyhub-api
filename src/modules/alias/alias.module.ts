@@ -5,8 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Alias } from '@/database/entities/Alias';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Alias])],
-  controllers: [AliasController],
-  providers: [AliasService],
+	imports: [TypeOrmModule.forFeature([Alias])],
+	controllers: [AliasController],
+	providers: [AliasService],
+	exports: [AliasService],
 })
 export class AliasModule {}

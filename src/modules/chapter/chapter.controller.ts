@@ -1,34 +1,52 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	Put,
+} from '@nestjs/common';
 import { ChapterService } from './chapter.service';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
+import { Chapter } from '@/database/entities/Chapter';
+import { IPaginatedType } from '@/pagination/paginated.decorator';
+import { PaginatedChaptersDTO } from '@/pagination/paginated-chapters.dto';
 
 @Controller('chapter')
 export class ChapterController {
-  constructor(private readonly chapterService: ChapterService) {}
+	constructor(private readonly chapterService: ChapterService) {}
 
-  @Post()
-  create(@Body() createChapterDto: CreateChapterDto) {
-    return this.chapterService.create(createChapterDto);
-  }
+	@Post()
+	async create(@Body() createChapterDto: CreateChapterDto): Promise<Chapter> {
+		return await this.chapterService.create(createChapterDto);
+	}
 
-  @Get()
-  findAll() {
-    return this.chapterService.findAll();
-  }
+	@Get()
+	async findAllChapters(
+		@Query() paginationQuery: any,
+	): Promise<IPaginatedType<Chapter>> {
+		const paginationDto = new PaginatedChaptersDTO();
+		Object.assign(paginationDto, paginationQuery);
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chapterService.findOne(+id);
-  }
+		return await this.chapterService.findAll(paginationDto);
+	}
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChapterDto: UpdateChapterDto) {
-    return this.chapterService.update(+id, updateChapterDto);
-  }
+	@Get(':id')
+	async findOne(@Param('id') id: string): Promise<Chapter> {
+		return await this.chapterService.findOne(+id);
+	}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chapterService.remove(+id);
-  }
+	@Put()
+	async update(@Body() updateChapterDto: UpdateChapterDto): Promise<Chapter> {
+		return await this.chapterService.update(updateChapterDto);
+	}
+
+	@Delete(':id')
+	async remove(@Param('id') id: string): Promise<string> {
+		return await this.chapterService.remove(+id);
+	}
 }

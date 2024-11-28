@@ -3,14 +3,14 @@ import { CreateModerationRequestDto } from '@/modules/moderation-request/dto/cre
 import { ModerationRequestService } from '@/modules/moderation-request/moderation-request.service';
 import { StoryService } from '@/modules/story/story.service';
 import {
-  WebSocketGateway,
-  SubscribeMessage,
-  MessageBody,
-  ConnectedSocket,
-  WebSocketServer,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
+	WebSocketGateway,
+	SubscribeMessage,
+	MessageBody,
+	ConnectedSocket,
+	WebSocketServer,
+	OnGatewayConnection,
+	OnGatewayDisconnect,
+	OnGatewayInit,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 
@@ -22,7 +22,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 @WebSocketGateway(3000, { cors: true })
 export class ModerationGateway
-	implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+	implements
+		OnGatewayInit,
+		OnGatewayConnection,
+		OnGatewayDisconnect,
+		OnGatewayInit
 {
 	@WebSocketServer() server: Server;
 
@@ -41,13 +45,15 @@ export class ModerationGateway
 		private readonly notificationService: NotificationService,
 		private readonly notificationUserService: NotificationUserService,
 	) {
-    console.log(`Websocket server is running on port ${process.env.PORT_WS}`);
-  }
+		console.log(
+			`Websocket server is running on port ${process.env.PORT_WS}`,
+		);
+	}
 
-  afterInit(socket: Socket): any {
-    console.log('Initialized');
-  }
-  
+	afterInit(socket: Socket): any {
+		console.log('Initialized');
+	}
+
 	private currentIndex = 0;
 
 	async onModuleInit(): Promise<Moderator[]> {
@@ -187,7 +193,9 @@ export class ModerationGateway
 			});
 
 			// Gửi thông báo tới tác giả
-			this.server.emit('story_updated', story);
+			this.server
+				.to(req.requesterId.toString())
+				.emit('story_updated', story);
 
 			// Gửi phản hồi cho kiểm duyệt viên
 			socket.emit('moderation_request_updated', req);

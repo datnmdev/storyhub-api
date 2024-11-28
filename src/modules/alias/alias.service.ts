@@ -15,8 +15,8 @@ export class AliasService {
     return await this.aliasRepository.save(createAliasDto);
   }
 
-  async findAll() {
-    return `This action returns all alias`;
+  async findAll(): Promise<Alias[]> {
+    return await this.aliasRepository.find();
   }
 
   async update(updateAliasDto: UpdateAliasDto[]): Promise<Alias[]> {
@@ -32,9 +32,9 @@ export class AliasService {
   
     return updatedAliases.filter(alias => alias !== null); // Loại bỏ các giá trị null nếu không tìm thấy
   }
-  
- 
-  async remove(id: number) {
-    return `This action removes a #${id} alias`;
+
+  async remove(id: number): Promise<string> {
+    await this.aliasRepository.delete(id);
+    return `Alias with ID ${id} removed`;
   }
 }

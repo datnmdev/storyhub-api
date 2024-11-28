@@ -22,8 +22,8 @@ export class ModerationRequestController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.moderationRequestService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<ModerationRequest> {
+    return await this.moderationRequestService.findOne(+id);
   }
 
   @Delete(':id')

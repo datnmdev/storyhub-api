@@ -39,7 +39,7 @@ export class FileUploadService {
 		const command = new PutObjectCommand(params);
 		try {
 			return await getSignedUrl(this.s3Client, command, {
-				expiresIn: 3600,
+				expiresIn: 7200,
 			});
 		} catch (error) {
 			console.error(`Error generating upload URL: ${error.message}`);
@@ -47,43 +47,44 @@ export class FileUploadService {
 		}
 	}
 
-	// Generate fileKey for story and user
-	async generateFileKeyForStoryAndUser(
-		userId: number,
+	// Generate fileKey for story
+	async generateFileKeyForStory(
 		storyId: number,
 		fileName: string,
 	): Promise<string> {
-		let fileKeyPrefix = '';
-		let serviceToCall = null;
-		let updateField = '';
-
-		if (userId != null && userId != undefined) {
-			fileKeyPrefix = `user/${String(userId)}/`;
-			serviceToCall = this.userService;
-			updateField = 'avatar';
-		} else if (storyId != null && storyId != undefined) {
-			fileKeyPrefix = `story/${String(storyId)}/`;
-			serviceToCall = this.storyService;
-			updateField = 'coverImage';
-		} else {
-			throw new Error(
-				'Both userId and storyId cannot be null or undefined',
-			);
-		}
-
-		await this.checkFolderExistsSequential(fileKeyPrefix);
+		await this.checkFolderExistsSequential(`story/${String(storyId)}/`);
 		// Tạo fileKey từ prefix và fileName
-		const fileKey = `${fileKeyPrefix}${fileName}`;
+		const fileKey = `story/${String(storyId)}/${fileName}`;
 
 		// Gọi phương thức generateUploadUrl với fileKey
 		const uploadUrl = await this.generateUploadUrl(fileKey);
 
-		const entity =
-			(await serviceToCall.getProfile(userId)) ||
-			(await serviceToCall.findOne(storyId));
-		if (entity && entity[updateField]) {
-			await this.deleteFile(entity[updateField]);
-			await serviceToCall.update({ [updateField]: fileKey });
+		const entity = await this.storyService.findOne(storyId);
+		if (entity && entity.coverImage) {
+			await this.deleteFile(entity.coverImage);
+			await this.storyService.update({
+				id: storyId,
+				coverImage: fileKey,
+			});
+		}
+		return uploadUrl;
+	}
+
+	// Generate fileKey for user
+	async generateFileKeyForUser(
+		userId: number,
+		fileName: string,
+	): Promise<string> {
+		await this.checkFolderExistsSequential(`user/${String(userId)}/`);
+		const fileKey = `user/${String(userId)}/${fileName}`;
+
+		// Gọi phương thức generateUploadUrl với fileKey
+		const uploadUrl = await this.generateUploadUrl(fileKey);
+
+		const entity = await this.userService.getProfile(userId);
+		if (entity && entity.avatar) {
+			await this.deleteFile(entity.avatar);
+			await this.userService.updateAvatar(userId, fileKey);
 		}
 		return uploadUrl;
 	}
@@ -121,7 +122,7 @@ export class FileUploadService {
 	}
 
 	// Delete a file from S3 if it exists
-	async deleteFile(fileKey: string) {
+	async deleteFile(fileKey: string): Promise<void> {
 		const params = {
 			Bucket: this.bucketName,
 			Key: fileKey,
@@ -149,7 +150,7 @@ export class FileUploadService {
 			throw new Error(`Error deleting file from S3: ${error.message}`);
 		}
 	}
-	private async checkFolderExistsSequential(path: string) {
+	private async checkFolderExistsSequential(path: string): Promise<void> {
 		const folders = path.split('/').filter(Boolean); // Tách đường dẫn thành các cấp thư mục
 		let currentPath = '';
 
@@ -187,7 +188,7 @@ export class FileUploadService {
 		}
 	}
 
-	private async createFolder(folderPath: string) {
+	private async createFolder(folderPath: string): Promise<void> {
 		const putParams = {
 			Bucket: this.bucketName,
 			Key: folderPath,

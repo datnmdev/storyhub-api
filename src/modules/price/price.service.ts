@@ -11,23 +11,30 @@ export class PriceService {
     @InjectRepository(Price)
     private priceRepository: Repository<Price>,
   ) {}
-  create(createPriceDto: CreatePriceDto): Promise<Price> {
-    return this.priceRepository.save(createPriceDto);
+  async create(createPriceDto: CreatePriceDto): Promise<Price> {
+    return await this.priceRepository.save(createPriceDto);
   }
 
-  findAll() {
-    return `This action returns all price`;
+  async findAll(storyId: number): Promise<Price[]> {
+    return await this.priceRepository.find({ where: { storyId } });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} price`;
+  async findOne(id: number): Promise<Price> {
+    const price = await this.priceRepository.findOne({ where: { id } });
+    if (!price) {
+      throw new Error(`Price with ID ${id} not found`);
+    }
+    return price;
   }
 
-  update(id: number, updatePriceDto: UpdatePriceDto) {
-    return `This action updates a #${id} price`;
+  async update(id: number, updatePriceDto: UpdatePriceDto): Promise<Price> {
+    const price = await this.findOne(id);
+    Object.assign(price, updatePriceDto);
+    return await this.priceRepository.save(price);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} price`;
+  async remove(id: number): Promise<string> {
+    await this.priceRepository.delete(id);
+    return `Price with ID ${id} removed`;
   }
 }

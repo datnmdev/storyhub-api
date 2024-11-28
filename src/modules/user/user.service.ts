@@ -16,4 +16,8 @@ export class UserService {
 		});
 		return profile;
 	}
+
+	async updateAvatar(userId: number, avatar: string) {
+		await this.userRepository.update({ id: userId }, { avatar });
+	} 
 }

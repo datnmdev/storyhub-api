@@ -1,22 +1,21 @@
 import {
-  IsInt,
-  IsNotEmpty,
-  IsNumberString,
-  IsOptional,
-  IsDateString,
+	IsInt,
+	IsNotEmpty,
+	IsNumberString,
+	IsOptional,
+	IsDateString,
 } from 'class-validator';
 
 export class CreatePriceDto {
-  @IsInt()
-  id: number;
+	@IsNotEmpty()
+	@IsNumberString()
+	amount: string;
 
-  @IsNotEmpty()
-  @IsNumberString()
-  amount: string;
+	@IsOptional()
+	@IsDateString()
+	startTime: Date;
 
-  @IsDateString()
-  startTime: Date;
-
-  @IsInt()
-  storyId: number;
+	@IsNotEmpty()
+	@IsInt()
+	storyId: number;
 }

@@ -6,6 +6,7 @@ import {
 	Param,
 	Delete,
 	Put,
+	Query,
 } from '@nestjs/common';
 import { StoryService } from './story.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -13,20 +14,45 @@ import { UpdateStoryDto } from './dto/update-story.dto';
 import { Story } from '@/database/entities/Story';
 import { PaginateStoriesDTO } from '@/pagination/paginated-stories.dto';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
+import { PriceService } from '../price/price.service';
+import { AliasService } from '../alias/alias.service';
 
 @Controller('story')
 export class StoryController {
-	constructor(private readonly storyService: StoryService) {}
+	constructor(
+		private readonly storyService: StoryService,
+		private readonly priceService: PriceService,
+		private readonly aliasService: AliasService,
+	) {}
 
 	@Post()
 	async createStory(@Body() createStoryDto: CreateStoryDto): Promise<Story> {
-		return await this.storyService.create(createStoryDto);
+		const story = await this.storyService.create(createStoryDto);
+		if (createStoryDto.price) {
+			await this.priceService.create({
+				amount: createStoryDto.price.amount,
+				startTime: new Date(createStoryDto.price.startTime),
+				storyId: story.id,
+			});
+		}
+		if (createStoryDto.alias) {
+			const resultArray = createStoryDto.alias.split(',').map((item) => {
+				return {
+					name: item.trim(),
+					storyId: story.id,
+				};
+			});
+			await this.aliasService.create(resultArray);
+		}
+		return story;
 	}
 
 	@Get()
 	async findAllStory(
-		@Body() paginationDto: PaginateStoriesDTO,
+		@Query() paginationQuery: any,
 	): Promise<IPaginatedType<Story>> {
+		const paginationDto = new PaginateStoriesDTO();
+		Object.assign(paginationDto, paginationQuery);
 		return this.storyService.findAll(paginationDto);
 	}
 

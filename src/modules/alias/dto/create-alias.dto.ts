@@ -1,9 +1,11 @@
-import { IsInt, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateAliasDto {
-  @IsString()
-  name: string;
+	@IsNotEmpty()
+	@IsString()
+	name: string;
 
-  @IsInt()
-  storyId: number;
+	@IsNotEmpty()
+	@IsInt()
+	storyId: number;
 }
