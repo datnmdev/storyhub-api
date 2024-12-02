@@ -13,7 +13,7 @@ import { UserModule } from './modules/user/user.module';
 import { JwtModule } from './common/jwt/jwt.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MiddlewareModule } from './common/middleware/middleware.module';
-import { AuthorizationMiddleware } from './common/middleware/middleware.service';
+import { AuthorizationMiddleware, VerifyUrlValidityMiddleware } from './common/middleware/middleware.service';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -25,10 +25,15 @@ import { ConfigModule } from './common/config/config.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { GuardModule } from './common/guards/guard.module';
 import { DepositeTransactionModule } from './modules/deposite-transaction/deposite-transaction.module';
-
 import { NotificationUserModule } from './modules/notification-user/notification-user.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { CountryModule } from './modules/country/country.module';
+import { UrlResolverModule } from './modules/url-resolver/url-resolver.module';
+import { UrlCipherModule } from './common/url-cipher/url-cipher.module';
+import { ViewModule } from './modules/view/view.module';
+import { FollowModule } from './modules/follow/follow.module';
+import { RatingModule } from './modules/rating/rating.module';
+
 @Module({
 	imports: [
 		ConfigModule,
@@ -64,6 +69,11 @@ import { CountryModule } from './modules/country/country.module';
 		WalletModule,
 		DepositeTransactionModule,
 		CountryModule,
+		UrlCipherModule,
+		UrlResolverModule,
+		ViewModule,
+		FollowModule,
+		RatingModule
 	],
 })
 export class AppModule implements NestModule {
@@ -71,12 +81,16 @@ export class AppModule implements NestModule {
 		consumer
 			.apply(AuthorizationMiddleware)
 			.forRoutes(
-				'auth/sign-out',
-				'user',
-				'wallet',
-				'deposite-transaction/create-payment-url',
-				'deposite-transaction/get-payment-status',
-				'deposite-transaction/get-deposite-transaction-history',
+				"auth/sign-out",
+				"user",
+				"wallet",
+				"deposite-transaction/create-payment-url",
+				"deposite-transaction/get-payment-status",
+				"deposite-transaction/get-deposite-transaction-history"
+			)
+			.apply(VerifyUrlValidityMiddleware)
+			.forRoutes(
+				"url-resolver"
 			);
 	}
 }

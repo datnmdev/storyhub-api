@@ -42,6 +42,7 @@ import { ResendOtpDto } from './dto/resend-otp.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UrlPrefix } from '@/common/constants/url-resolver.constants';
 
 @Injectable()
 export class AuthService {
@@ -188,7 +189,7 @@ export class AuthService {
 					// Tạo và lưu user mới
 					const userEntity = plainToInstance(User, {
 						name: userInfo.name,
-						avatar: userInfo?.picture
+						avatar: UrlPrefix.EXTERNAL_GOOGLE + userInfo?.picture
 					} as User)
 					const newUser = await queryRunner.manager.save(userEntity);
 

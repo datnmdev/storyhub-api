@@ -197,4 +197,8 @@ export class FileUploadService {
 		const putCommand = new PutObjectCommand(putParams);
 		await this.s3Client.send(putCommand);
 	}
+
+	getAwsS3Client() {
+		return this.s3Client;
+	}
 }

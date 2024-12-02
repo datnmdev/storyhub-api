@@ -3,6 +3,7 @@ import { PriceService } from './price.service';
 import { CreatePriceDto } from './dto/create-price.dto';
 import { UpdatePriceDto } from './dto/update-price.dto';
 import { Price } from '@/database/entities/Price';
+import { GetCurrentPriceDto } from './dto/get-current-price.dto';
 
 @Controller('price')
 export class PriceController {
@@ -32,4 +33,9 @@ export class PriceController {
   async remove(@Param('id') id: string): Promise<string> {
     return await this.priceService.remove(+id);
   }
+
+  @Get("all/current")
+	getCurrrentPrice(@Query() getCurrrentPriceDto: GetCurrentPriceDto) {
+		return this.priceService.getCurrentPrice(getCurrrentPriceDto.storyId);
+	}
 }

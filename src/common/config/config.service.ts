@@ -52,4 +52,19 @@ export class ConfigService {
             vnpReturnUrl: this.nestConfigService.get('VNP_RETURN_URL')
         }
     }
+
+    getUrlCipherConfig() {
+        return {
+            urlCipherSecret: this.nestConfigService.get('URL_CIPHER_SECRET')
+        }
+    }
+
+    getAwsS3Config() {
+        return {
+            awsAccessKeyId: this.nestConfigService.get('AWS_ACCESS_KEY_ID'),
+            awsSecretAccessKey: this.nestConfigService.get('AWS_SECRET_ACCESS_KEY'),
+            awsRegion: this.nestConfigService.get('AWS_REGION'),
+            awsS3BucketName: this.nestConfigService.get('S3_BUCKET_NAME')
+        }
+    }
 }
