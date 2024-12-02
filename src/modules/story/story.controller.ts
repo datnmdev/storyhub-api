@@ -16,6 +16,7 @@ import { PaginateStoriesDTO } from '@/pagination/paginated-stories.dto';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { PriceService } from '../price/price.service';
 import { AliasService } from '../alias/alias.service';
+import { GetStoryWithFilterDto } from './dto/get-story-with-filter.dto';
 
 @Controller('story')
 export class StoryController {
@@ -69,5 +70,11 @@ export class StoryController {
 	@Delete(':id')
 	async removeStory(@Param('id') id: number) {
 		return this.storyService.remove(id);
+	}
+
+	// Nguyễn Minh Đạt
+	@Get("all/filter")
+	getStoryWithFilter(@Query() getStoryWithFilterDto: GetStoryWithFilterDto) {
+		return this.storyService.getStoryWithFilter(getStoryWithFilterDto);
 	}
 }

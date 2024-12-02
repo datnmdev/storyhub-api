@@ -15,6 +15,7 @@ import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { Chapter } from '@/database/entities/Chapter';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { PaginatedChaptersDTO } from '@/pagination/paginated-chapters.dto';
+import { GetChapterWithFilterDto } from './dto/get-chapter-with-filter.dto';
 
 @Controller('chapter')
 export class ChapterController {
@@ -49,4 +50,10 @@ export class ChapterController {
 	async remove(@Param('id') id: string): Promise<string> {
 		return await this.chapterService.remove(+id);
 	}
+
+  // datnmptit
+  @Get('all/filter')
+  getChapterWithFilter(@Query() getChapterWithFilterDto: GetChapterWithFilterDto) {
+    return this.chapterService.getChapterWithFilter(getChapterWithFilterDto);
+  }
 }

@@ -9,6 +9,9 @@ import { UserModule } from '../user/user.module';
   imports: [StoryModule, ChapterImageModule, UserModule],
   controllers: [FileUploadController],
   providers: [FileUploadService],
+  exports: [
+    FileUploadService
+  ]
 })
 
 export class FileUploadModule {}

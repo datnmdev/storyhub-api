@@ -3,7 +3,7 @@ import { CreatePriceDto } from './dto/create-price.dto';
 import { UpdatePriceDto } from './dto/update-price.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Price } from '@/database/entities/Price';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 
 @Injectable()
 export class PriceService {
@@ -36,5 +36,23 @@ export class PriceService {
   async remove(id: number): Promise<string> {
     await this.priceRepository.delete(id);
     return `Price with ID ${id} removed`;
+  }
+
+  async getCurrentPrice(storyId: number) {
+    const prices = await this.priceRepository.find({
+      where: {
+        storyId,
+        startTime: LessThanOrEqual(new Date())
+      },
+      order: {
+        startTime: "desc"
+      },
+      take: 1
+    })
+
+    if (prices.length == 0) {
+      return 0;
+    }
+    return Number(prices[0].amount);
   }
 }
