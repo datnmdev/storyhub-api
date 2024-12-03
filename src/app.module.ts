@@ -33,6 +33,8 @@ import { UrlCipherModule } from './common/url-cipher/url-cipher.module';
 import { ViewModule } from './modules/view/view.module';
 import { FollowModule } from './modules/follow/follow.module';
 import { RatingModule } from './modules/rating/rating.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthorModule } from './modules/author/author.module';
 
 @Module({
 	imports: [
@@ -41,7 +43,17 @@ import { RatingModule } from './modules/rating/rating.module';
 			rootPath: path.join(process.cwd(), 'public'),
 			serveRoot: '/public',
 		}),
-		DatabaseModule,
+		// DatabaseModule,
+		TypeOrmModule.forRoot({
+			type: 'mysql',
+			host: process.env.HOST_DB,
+			port: Number(process.env.PORT_DB),
+			username: process.env.USERNAME_DB,
+			password: process.env.PASSWORD_DB,
+			database: process.env.DB_NAME,
+			entities: ['dist/**/entities/*.js'],
+			synchronize: false,
+		}),
 		StoryModule,
 		AliasModule,
 		FileUploadModule,
@@ -73,7 +85,8 @@ import { RatingModule } from './modules/rating/rating.module';
 		UrlResolverModule,
 		ViewModule,
 		FollowModule,
-		RatingModule
+		RatingModule,
+		AuthorModule,
 	],
 })
 export class AppModule implements NestModule {

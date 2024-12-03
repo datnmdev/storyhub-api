@@ -201,4 +201,17 @@ export class StoryService {
 			stories[1]
 		]
 	}
+
+	async getGenres(storyId: number) {
+		const story = await this.storyRepository.findOne({
+			where: {
+				id: storyId
+			},
+			relations: [
+				'genres'
+			]
+		})
+
+		return story.genres;
+	} 
 }

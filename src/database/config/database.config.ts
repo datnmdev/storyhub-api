@@ -1,6 +1,5 @@
 import { ConfigService } from '@nestjs/config';
 import { DataSourceOptions } from 'typeorm';
-import { DateSubscriber } from '../../common/subscribers/date.subscriber';
 import * as path from 'path';
 
 export const databaseConfig = async (
@@ -14,7 +13,6 @@ export const databaseConfig = async (
   database: configService.get('DB_NAME'),
   entities: [path.join(__dirname, '../entities', '*.{ts,js}')],
   synchronize: false,
-  subscribers: [DateSubscriber],
   logging: false,
   logger: 'advanced-console',
 });

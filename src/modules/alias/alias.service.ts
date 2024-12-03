@@ -37,4 +37,12 @@ export class AliasService {
     await this.aliasRepository.delete(id);
     return `Alias with ID ${id} removed`;
   }
+
+  getAliasByStoryId(storyId: number) {
+    return this.aliasRepository.find({
+      where: {
+        storyId
+      }
+    })
+  }
 }
