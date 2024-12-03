@@ -111,6 +111,18 @@ export class AppModule implements NestModule {
 				{
 					path: "rating",
 					method: RequestMethod.GET
+				},
+				{
+					path: "follow",
+					method: RequestMethod.POST
+				},
+				{
+					path: "follow",
+					method: RequestMethod.DELETE
+				},
+				{
+					path: "follow",
+					method: RequestMethod.GET
 				}
 			)
 			.apply(VerifyUrlValidityMiddleware)
