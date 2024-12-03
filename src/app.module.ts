@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
 import { StoryModule } from './modules/story/story.module';
 import { AliasModule } from './modules/alias/alias.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
@@ -99,7 +99,19 @@ export class AppModule implements NestModule {
 				"wallet",
 				"deposite-transaction/create-payment-url",
 				"deposite-transaction/get-payment-status",
-				"deposite-transaction/get-deposite-transaction-history"
+				"deposite-transaction/get-deposite-transaction-history",
+				{
+					path: "rating",
+					method: RequestMethod.POST
+				},
+				{
+					path: "rating",
+					method: RequestMethod.PUT
+				},
+				{
+					path: "rating",
+					method: RequestMethod.GET
+				}
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(
