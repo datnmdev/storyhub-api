@@ -1,7 +1,7 @@
 import { Transform } from "class-transformer";
-import { IsIn, IsInt, IsNotEmpty } from "class-validator";
+import { IsInt, IsNotEmpty } from "class-validator";
 
-export class GetViewCountOfStoryDto {
+export class GetRatingSummaryDto {
     @Transform(({ value }) => Number(value))
     @IsNotEmpty()
     @IsInt()

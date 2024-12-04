@@ -43,6 +43,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UrlPrefix } from '@/common/constants/url-resolver.constants';
+import { Wallet } from '../wallet/entities/Wallet.entity';
 
 @Injectable()
 export class AuthService {
@@ -216,6 +217,13 @@ export class AuthService {
 					} as GoogleCredential)
 					await queryRunner.manager.save(googleCredentialEntity);
 
+					// Tạo ví
+					const walletEntity = plainToInstance(Wallet, {
+						id: newUser.id,
+						balance: '0'
+					} as Wallet)
+					await queryRunner.manager.save(walletEntity);
+
 					// Thực hiện commit transaction
 					await queryRunner.commitTransaction();
 
@@ -227,16 +235,16 @@ export class AuthService {
 						role: newAccount.roleId,
 						iat: Date.now()
 					} as JwtPayload)
+				} else {
+					// Tạo token mới
+					payload = plainToInstance(JwtPayload, {
+						userId: googleCredential.account.user.id,
+						accountId: googleCredential.id,
+						status: googleCredential.account.status,
+						role: googleCredential.account.roleId,
+						iat: Date.now()
+					} as JwtPayload)
 				}
-
-				// Tạo token mới
-				payload = plainToInstance(JwtPayload, {
-					userId: googleCredential.account.user.id,
-					accountId: googleCredential.id,
-					status: googleCredential.account.status,
-					role: googleCredential.account.roleId,
-					iat: Date.now()
-				} as JwtPayload)
 				const newToken = this.jwtService.generateToken(payload);
 
 				// Ghi lại phiên đăng nhập vào redis
@@ -259,6 +267,8 @@ export class AuthService {
 					token: newToken
 				}
 				await this.redisClient.set(KeyGenerator.googleOauthStateKey(state), JSON.stringify(oAuthState), { KEEPTTL: true });
+				console.log(1);
+
 			} else {
 				const oAuthState: OAuthState = {
 					status: OAuthStatus.FAILED,
@@ -283,9 +293,6 @@ export class AuthService {
 
 	async getTokenAfterOAuth(state: string) {
 		const oAuthState: OAuthState = JSON.parse(await this.redisClient.get(KeyGenerator.googleOauthStateKey(state)));
-		if (oAuthState.token) {
-			await this.redisClient.del(KeyGenerator.googleOauthStateKey(state));
-		}
 		return oAuthState;
 	}
 
@@ -392,6 +399,14 @@ export class AuthService {
 				password: await bcrypt.hash(signUpDto.password, 10)
 			} as EmailPasswordCredential)
 			await queryRunner.manager.save(emailPasswordCredentialEntity);
+
+			// Tạo ví
+			const walletEntity = plainToInstance(Wallet, {
+				id: newUser.id,
+				balance: '0'
+			} as Wallet)
+			await queryRunner.manager.save(walletEntity);
+
 			const jobData: SendOtpData = {
 				accountId: newAccount.id,
 				otp: randomString.generate({

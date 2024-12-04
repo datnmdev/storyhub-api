@@ -21,7 +21,11 @@ export class CountryService {
 	}
 
   findOne(id: number) {
-    return `This action returns a #${id} country`;
+    return this.countryRepository.findOne({
+		where: {
+			id
+		}
+	});
   }
 
   update(id: number, updateCountryDto: UpdateCountryDto) {

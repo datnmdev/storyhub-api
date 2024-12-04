@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
 import { StoryModule } from './modules/story/story.module';
 import { AliasModule } from './modules/alias/alias.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
@@ -33,6 +33,9 @@ import { UrlCipherModule } from './common/url-cipher/url-cipher.module';
 import { ViewModule } from './modules/view/view.module';
 import { FollowModule } from './modules/follow/follow.module';
 import { RatingModule } from './modules/rating/rating.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthorModule } from './modules/author/author.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
 
 @Module({
 	imports: [
@@ -73,7 +76,9 @@ import { RatingModule } from './modules/rating/rating.module';
 		UrlResolverModule,
 		ViewModule,
 		FollowModule,
-		RatingModule
+		RatingModule,
+		AuthorModule,
+		InvoiceModule
 	],
 })
 export class AppModule implements NestModule {
@@ -86,7 +91,40 @@ export class AppModule implements NestModule {
 				"wallet",
 				"deposite-transaction/create-payment-url",
 				"deposite-transaction/get-payment-status",
-				"deposite-transaction/get-deposite-transaction-history"
+				"deposite-transaction/get-deposite-transaction-history",
+				{
+					path: "rating",
+					method: RequestMethod.POST
+				},
+				{
+					path: "rating",
+					method: RequestMethod.PUT
+				},
+				{
+					path: "rating",
+					method: RequestMethod.GET
+				},
+				{
+					path: "follow",
+					method: RequestMethod.POST
+				},
+				{
+					path: "follow",
+					method: RequestMethod.DELETE
+				},
+				{
+					path: "follow",
+					method: RequestMethod.GET
+				},
+				{
+					path: "invoice",
+					method: RequestMethod.GET
+				},
+				"chapter/reader/content",
+				{
+					path: "invoice",
+					method: RequestMethod.POST
+				}
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(

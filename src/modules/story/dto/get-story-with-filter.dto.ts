@@ -58,7 +58,8 @@ export class GetStoryWithFilterDto extends Pagination {
     @IsOptional()
     @IsOrderBy([
         'created_at',
-        'updated_at'
+        'updated_at',
+        'id'
     ])
     orderBy: OrderBy
 }

@@ -77,4 +77,9 @@ export class StoryController {
 	getStoryWithFilter(@Query() getStoryWithFilterDto: GetStoryWithFilterDto) {
 		return this.storyService.getStoryWithFilter(getStoryWithFilterDto);
 	}
+
+	@Get("all/get-genres")
+	getGenresOfStory(@Query('storyId') storyId: number) {
+		return this.storyService.getGenres(storyId);
+	}
 }

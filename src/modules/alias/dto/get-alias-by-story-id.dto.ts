@@ -1,9 +1,9 @@
 import { Transform } from "class-transformer";
-import { IsIn, IsInt, IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsNumber } from "class-validator";
 
-export class GetViewCountOfStoryDto {
+export class GetAliasByStoryIdDto {
     @Transform(({ value }) => Number(value))
     @IsNotEmpty()
-    @IsInt()
+    @IsNumber()
     storyId: number
 }
