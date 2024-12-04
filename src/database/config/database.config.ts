@@ -11,7 +11,7 @@ export const databaseConfig = async (
   username: configService.get('USERNAME_DB'),
   password: configService.get('PASSWORD_DB'),
   database: configService.get('DB_NAME'),
-  entities: [path.join(__dirname, '../entities', '*.{ts,js}')],
+  entities: ['dist/**/entities/*.{ts,js}'],
   synchronize: false,
   logging: false,
   logger: 'advanced-console',
