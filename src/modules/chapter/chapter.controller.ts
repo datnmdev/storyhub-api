@@ -3,11 +3,11 @@ import {
 	Get,
 	Post,
 	Body,
-	Patch,
 	Param,
 	Delete,
 	Query,
 	Put,
+	UseGuards,
 } from '@nestjs/common';
 import { ChapterService } from './chapter.service';
 import { CreateChapterDto } from './dto/create-chapter.dto';
@@ -16,6 +16,11 @@ import { Chapter } from '@/database/entities/Chapter';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { PaginatedChaptersDTO } from '@/pagination/paginated-chapters.dto';
 import { GetChapterWithFilterDto } from './dto/get-chapter-with-filter.dto';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { Role } from '@/common/constants/account.constants';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { GetChapterContentDto } from './dto/get-chapter-content';
+import { User } from '@/common/decorators/user.decorator';
 
 @Controller('chapter')
 export class ChapterController {
@@ -55,5 +60,12 @@ export class ChapterController {
   @Get('all/filter')
   getChapterWithFilter(@Query() getChapterWithFilterDto: GetChapterWithFilterDto) {
     return this.chapterService.getChapterWithFilter(getChapterWithFilterDto);
+  }
+
+  @Get('reader/content')
+  @Roles(Role.READER)
+  @UseGuards(RolesGuard)
+  getChapterContent(@User('userId') userId: number, @Query() getChapterContentDto: GetChapterContentDto) {
+	return this.chapterService.getChapterContent(userId, getChapterContentDto.chapterId);
   }
 }

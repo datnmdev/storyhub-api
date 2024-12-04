@@ -11,11 +11,11 @@ import { PriceModule } from '../price/price.module';
 	imports: [
 		TypeOrmModule.forFeature([Story, Genre]),
 		AliasModule,
-    PriceModule,
-    AliasModule,
+		PriceModule,
+		AliasModule,
 	],
 	controllers: [StoryController],
 	providers: [StoryService],
 	exports: [StoryService],
 })
-export class StoryModule {}
+export class StoryModule { }

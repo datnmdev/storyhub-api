@@ -2,7 +2,7 @@ import { Pagination } from "@/common/class/pagination.class";
 import { JsonToObject } from "@/common/decorators/transform.decorator";
 import { IsOrderBy } from "@/common/decorators/validation.decorator";
 import { OrderBy } from "@/common/types/typeorm.type";
-import { Transform } from "class-transformer";
+import { Exclude, Expose, Transform } from "class-transformer";
 import { IsInt, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class GetChapterWithFilterDto extends Pagination {
@@ -26,12 +26,37 @@ export class GetChapterWithFilterDto extends Pagination {
     storyId?: number
 
     @JsonToObject<OrderBy>([
-        ["updated_at", "DESC"]
+        ["order", "DESC"],
+        ["updated_at", "DESC"],
+        ["id", "DESC"]
     ])
     @IsOptional()
     @IsOrderBy([
         'created_at',
-        'updated_at'
+        'updated_at',
+        'order',
+        'id'
     ])
     orderBy: OrderBy
+}
+
+@Exclude()
+export class ChapterInfoPublicDto {
+    @Expose()
+    id: number
+
+    @Expose()
+    order: number
+
+    @Expose()
+    name: string
+
+    @Expose()
+    createdAt: Date
+
+    @Expose()
+    updatedAt: Date
+    
+    @Expose()
+    storyId: number
 }

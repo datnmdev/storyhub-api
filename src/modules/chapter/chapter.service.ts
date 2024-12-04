@@ -1,19 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Chapter } from '@/database/entities/Chapter';
-import { Like, Not, Repository } from 'typeorm';
+import { DataSource, Like, Not, Repository } from 'typeorm';
 import { PaginatedChaptersDTO } from '@/pagination/paginated-chapters.dto';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { Brackets } from 'typeorm';
-import { GetChapterWithFilterDto } from './dto/get-chapter-with-filter.dto';
+import { ChapterInfoPublicDto, GetChapterWithFilterDto } from './dto/get-chapter-with-filter.dto';
+import { ChapterStatus } from '@/common/constants/chapter.constants';
+import { plainToInstance } from 'class-transformer';
+import { PriceService } from '../price/price.service';
+import { Invoice } from '../invoice/entities/invoice.entity';
+import { Wallet } from '../wallet/entities/Wallet.entity';
+import { WalletService } from '../wallet/wallet.service';
+import { NotEnoughMoneyException } from '@/common/exceptions/NotEnoughMoneyException';
+import { InvoiceService } from '../invoice/invoice.service';
+import { StoryType } from '@/common/constants/story.constants';
+import { ImageContentDto, TextContentDto } from './dto/get-chapter-content';
+import UrlResolverUtils from '@/common/utils/url-resolver.util';
+import { UrlCipherService } from '@/common/url-cipher/url-cipher.service';
+import { UrlCipherPayload } from '@/common/url-cipher/url-cipher.class';
 
 @Injectable()
 export class ChapterService {
 	constructor(
 		@InjectRepository(Chapter)
 		private chapterRepository: Repository<Chapter>,
+		private readonly priceService: PriceService,
+		private readonly dataSource: DataSource,
+		private readonly walletService: WalletService,
+		private readonly invoiceService: InvoiceService,
+		private readonly urlCipherService: UrlCipherService
 	) { }
 	async create(createChapterDto: CreateChapterDto): Promise<Chapter> {
 		return this.chapterRepository.save(createChapterDto);
@@ -129,6 +147,9 @@ export class ChapterService {
 					})
 				}
 			}))
+			.andWhere("chapter.status = :status", {
+				status: ChapterStatus.PUBLISHING
+			})
 			.andWhere(new Brackets(qb => {
 				if (getChapterWithFilterDto.storyId) {
 					qb.where("chapter.story_id = :storyId", {
@@ -142,9 +163,91 @@ export class ChapterService {
 				qb.addOrderBy(`chapter.${value[0]}`, value[1]);
 			})
 		}
-		qb.addOrderBy('chapter.id', 'ASC');
 		qb.take(getChapterWithFilterDto.limit);
 		qb.skip((getChapterWithFilterDto.page - 1) * getChapterWithFilterDto.limit);
-		return qb.getManyAndCount();
+		const chapters = await qb.getManyAndCount();
+		return [
+			plainToInstance(ChapterInfoPublicDto, chapters[0]),
+			chapters[1]
+		]
+	}
+
+	async getChapterContent(userId: number, chapterId: number) {
+		const now = new Date();
+		const queryRunner = this.dataSource.createQueryRunner();
+		await queryRunner.connect();
+		try {
+			await queryRunner.startTransaction();
+			const chapter = await this.chapterRepository.findOne({
+				where: {
+					id: chapterId
+				},
+				relations: [
+					"story",
+					"chapterImages"
+				]
+			})
+
+			if (chapter) {
+				const isPaid = await this.invoiceService.getInvoiceBy(userId, chapterId);
+				// Kiểm tra thanh toán hay chưa?
+				if (!isPaid) {
+					const currentPrice = await this.priceService.getPriceAt(chapter.storyId, now);
+					const readerWallet = await this.walletService.findWalletBy(userId);
+					const authorWallet = await this.walletService.findWalletBy(chapter.story.authorId);
+					// Kiểm tra ví tiền có đủ tiền không
+					if (Number(readerWallet.balance) >= currentPrice) {
+						const invoiceEntity = plainToInstance(Invoice, {
+							readerId: userId,
+							chapterId: chapterId,
+							totalAmount: String(currentPrice),
+							createdAt: now
+						} as Invoice)
+						await queryRunner.manager.save(invoiceEntity);
+						await queryRunner.manager.update(Wallet, userId, {
+							balance: String(Number(readerWallet.balance) - currentPrice)
+						});
+						await queryRunner.manager.update(Wallet, chapter.story.authorId, {
+							balance: String(Number(authorWallet.balance) + Math.floor(currentPrice * 0.9))
+						})
+						await queryRunner.commitTransaction();
+					} else {
+						throw new NotEnoughMoneyException();
+					}
+				}
+
+				// Kiểm tra loại truyện và trả về nội dung chương
+				if (chapter.story.type === StoryType.COMIC) {
+					return plainToInstance(ImageContentDto, {
+						...chapter,
+						images: chapter.chapterImages.map(chapterImage => ({
+							...chapterImage,
+							path: UrlResolverUtils.createUrl('url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
+								url: chapterImage.path,
+								expireIn: 4 * 60 * 60,
+								iat: Date.now()
+							} as UrlCipherPayload)))
+						}))
+					} as ImageContentDto)
+				} else {
+					return plainToInstance(TextContentDto, chapter);
+				}
+			} else {
+				throw new BadRequestException();
+			}
+		} catch (error) {
+			await queryRunner.rollbackTransaction();
+			throw error;
+		} finally {
+			await queryRunner.release();
+		}
+	}
+
+	getOneBy(id: number) {
+		return this.chapterRepository.findOne({
+			where: {
+				id
+			}
+		})
 	}
 }

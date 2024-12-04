@@ -29,8 +29,17 @@ export class ViewService {
             .getCount();
     }
 
+    getViewCountOfChapter(chapterId: number) {
+        return this.viewRepository
+            .createQueryBuilder('view')
+            .where("view.chapter_id = :chapterId", {
+                chapterId
+            })
+            .getCount();
+    }
+
     async getTopStory(getTopStoryDto: GetTopStoryDto) {
-        const [ result ] = await this.dataSource.query(
+        const [result] = await this.dataSource.query(
             `CALL getTopViewedStories(?, ?)`,
             [
                 getTopStoryDto.page,
@@ -55,7 +64,7 @@ export class ViewService {
                     updatedAt: row.updated_at,
                     countryId: row.country_id,
                     authorId: row.author_id
-                } as Story) 
+                } as Story)
             }),
             await this.dataSource
                 .createQueryBuilder(Story, 'story')

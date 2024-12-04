@@ -180,7 +180,6 @@ export class StoryService {
 				qb.addOrderBy(`story.${value[0]}`, value[1]);
 			})
 		}
-		qb.addOrderBy('story.id', 'ASC');
 		qb.take(getStoryWithFilterDto.limit)
 		qb.skip((getStoryWithFilterDto.page - 1) * getStoryWithFilterDto.limit);
 
@@ -213,5 +212,5 @@ export class StoryService {
 		})
 
 		return story.genres;
-	} 
+	}
 }

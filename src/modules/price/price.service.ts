@@ -55,4 +55,22 @@ export class PriceService {
     }
     return Number(prices[0].amount);
   }
+
+  async getPriceAt(storyId: number, atTime: Date) {
+    const prices = await this.priceRepository.find({
+      where: {
+        storyId,
+        startTime: LessThanOrEqual(atTime)
+      },
+      order: {
+        startTime: "desc"
+      },
+      take: 1
+    })
+
+    if (prices.length == 0) {
+      return 0;
+    }
+    return Number(prices[0].amount);
+  }
 }

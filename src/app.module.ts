@@ -35,6 +35,7 @@ import { FollowModule } from './modules/follow/follow.module';
 import { RatingModule } from './modules/rating/rating.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthorModule } from './modules/author/author.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
 
 @Module({
 	imports: [
@@ -87,6 +88,7 @@ import { AuthorModule } from './modules/author/author.module';
 		FollowModule,
 		RatingModule,
 		AuthorModule,
+		InvoiceModule
 	],
 })
 export class AppModule implements NestModule {
@@ -123,6 +125,15 @@ export class AppModule implements NestModule {
 				{
 					path: "follow",
 					method: RequestMethod.GET
+				},
+				{
+					path: "invoice",
+					method: RequestMethod.GET
+				},
+				"chapter/reader/content",
+				{
+					path: "invoice",
+					method: RequestMethod.POST
 				}
 			)
 			.apply(VerifyUrlValidityMiddleware)
