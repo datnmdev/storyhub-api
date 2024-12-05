@@ -6,6 +6,7 @@ import {
 	Param,
 	Delete,
 	Put,
+	Query,
 } from '@nestjs/common';
 import { AliasService } from './alias.service';
 import { CreateAliasDto } from './dto/create-alias.dto';
@@ -27,5 +28,10 @@ export class AliasController {
 	@Get()
 	async findAll(): Promise<Alias[]> {
 		return await this.aliasService.findAll();
+	}
+
+	@Get('get-by-story-id')
+	getAliasByStoryId(@Query() getAliasByStoryId: GetAliasByStoryIdDto) {
+		return this.aliasService.getAliasByStoryId(getAliasByStoryId.storyId);
 	}
 }

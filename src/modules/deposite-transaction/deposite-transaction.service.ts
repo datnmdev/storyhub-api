@@ -193,6 +193,9 @@ export class DepositeTransactionService {
             where: {
                 readerId: userId
             },
+            order: {
+                createdAt: "DESC"
+            },
             take: getDepositeTransHistoryDto.limit,
             skip: (getDepositeTransHistoryDto.page - 1) * getDepositeTransHistoryDto.limit
         })
