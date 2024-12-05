@@ -1,10 +1,14 @@
 import { Chapter } from '@/database/entities/Chapter';
 import { Reader } from '@/modules/reader/entities/reader.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Generated, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 @Index('FK_invoice_chapter_idx', ['chapterId'], {})
 @Entity('invoice', { schema: 'storyhub' })
 export class Invoice {
+	@Column('int', { name: 'id', unique: true, nullable: false })
+	@Generated("increment")
+	id: number;
+
 	@Column('int', { primary: true, name: 'reader_id' })
 	readerId: number;
 
