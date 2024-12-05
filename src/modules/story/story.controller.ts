@@ -17,6 +17,7 @@ import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { PriceService } from '../price/price.service';
 import { AliasService } from '../alias/alias.service';
 import { GetStoryWithFilterDto } from './dto/get-story-with-filter.dto';
+import { SearchStoryDto } from './dto/search-story.dto';
 
 @Controller('story')
 export class StoryController {
@@ -89,7 +90,7 @@ export class StoryController {
 		return this.storyService.remove(id);
 	}
 
-	// Nguyễn Minh Đạt
+	// datnmptit
 	@Get("all/filter")
 	getStoryWithFilter(@Query() getStoryWithFilterDto: GetStoryWithFilterDto) {
 		return this.storyService.getStoryWithFilter(getStoryWithFilterDto);
@@ -98,5 +99,10 @@ export class StoryController {
 	@Get("all/get-genres")
 	getGenresOfStory(@Query('storyId') storyId: number) {
 		return this.storyService.getGenres(storyId);
+	}
+
+	@Get("all/search")
+	search(@Query() searchStoryDto: SearchStoryDto) {
+		return this.storyService.search(searchStoryDto.keyword);
 	}
 }
