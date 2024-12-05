@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,6 +21,8 @@ import { ImageContentDto, TextContentDto } from './dto/get-chapter-content';
 import UrlResolverUtils from '@/common/utils/url-resolver.util';
 import { UrlCipherService } from '@/common/url-cipher/url-cipher.service';
 import { UrlCipherPayload } from '@/common/url-cipher/url-cipher.class';
+import { User } from '@/@types/express';
+import { Role } from '@/common/constants/account.constants';
 
 @Injectable()
 export class ChapterService {
@@ -163,74 +165,50 @@ export class ChapterService {
 		]
 	}
 
-	async getChapterContent(userId: number, chapterId: number) {
+	async getChapterContent(user: User, chapterId: number) {
 		const now = new Date();
-		const queryRunner = this.dataSource.createQueryRunner();
-		await queryRunner.connect();
-		try {
-			await queryRunner.startTransaction();
-			const chapter = await this.chapterRepository.findOne({
-				where: {
-					id: chapterId
-				},
-				relations: [
-					"story",
-					"chapterImages"
-				]
-			})
+		const chapter = await this.chapterRepository.findOne({
+			where: {
+				id: chapterId
+			},
+			relations: [
+				"story",
+				"chapterImages"
+			]
+		})
 
-			if (chapter) {
-				const isPaid = await this.invoiceService.getInvoiceBy(userId, chapterId);
-				// Kiểm tra thanh toán hay chưa?
-				if (!isPaid) {
-					const currentPrice = await this.priceService.getPriceAt(chapter.storyId, now);
-					const readerWallet = await this.walletService.findWalletBy(userId);
-					const authorWallet = await this.walletService.findWalletBy(chapter.story.authorId);
-					// Kiểm tra ví tiền có đủ tiền không
-					if (Number(readerWallet.balance) >= currentPrice) {
-						const invoiceEntity = plainToInstance(Invoice, {
-							readerId: userId,
-							chapterId: chapterId,
-							totalAmount: String(currentPrice),
-							createdAt: now
-						} as Invoice)
-						await queryRunner.manager.save(invoiceEntity);
-						await queryRunner.manager.update(Wallet, userId, {
-							balance: String(Number(readerWallet.balance) - currentPrice)
-						});
-						await queryRunner.manager.update(Wallet, chapter.story.authorId, {
-							balance: String(Number(authorWallet.balance) + Math.floor(currentPrice * 0.9))
-						})
-						await queryRunner.commitTransaction();
-					} else {
+		if (chapter) {
+			const currentPrice = await this.priceService.getPriceAt(chapter.storyId, now);
+			if (currentPrice > 0) {
+				if (user.role === Role.READER) {
+					const isPaid = await this.invoiceService.getInvoiceBy(user.userId, chapterId);
+					// Kiểm tra thanh toán hay chưa?
+					if (!isPaid) {
 						throw new NotEnoughMoneyException();
 					}
-				}
-
-				// Kiểm tra loại truyện và trả về nội dung chương
-				if (chapter.story.type === StoryType.COMIC) {
-					return plainToInstance(ImageContentDto, {
-						...chapter,
-						images: chapter.chapterImages.map(chapterImage => ({
-							...chapterImage,
-							path: UrlResolverUtils.createUrl('url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
-								url: chapterImage.path,
-								expireIn: 4 * 60 * 60,
-								iat: Date.now()
-							} as UrlCipherPayload)))
-						}))
-					} as ImageContentDto)
 				} else {
-					return plainToInstance(TextContentDto, chapter);
+					throw new NotEnoughMoneyException();
 				}
-			} else {
-				throw new BadRequestException();
 			}
-		} catch (error) {
-			await queryRunner.rollbackTransaction();
-			throw error;
-		} finally {
-			await queryRunner.release();
+
+			// Kiểm tra loại truyện và trả về nội dung chương
+			if (chapter.story.type === StoryType.COMIC) {
+				return plainToInstance(ImageContentDto, {
+					...chapter,
+					images: chapter.chapterImages.map(chapterImage => ({
+						...chapterImage,
+						path: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
+							url: chapterImage.path,
+							expireIn: 4 * 60 * 60,
+							iat: Date.now()
+						} as UrlCipherPayload)))
+					}))
+				} as ImageContentDto)
+			} else {
+				return plainToInstance(TextContentDto, chapter);
+			}
+		} else {
+			throw new NotFoundException();
 		}
 	}
 

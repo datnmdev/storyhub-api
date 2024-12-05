@@ -5,10 +5,9 @@ import { RedisClient } from '../redis/redis.type';
 import KeyGenerator from '../utils/generate-key.util';
 import { JwtService } from '../jwt/jwt.service';
 import { UnauthorizedException } from '../exceptions/unauthorized.exception';
-import { AccountStatus } from '../constants/account.constants';
+import { AccountStatus, Role } from '../constants/account.constants';
 import { UrlCipherService } from '../url-cipher/url-cipher.service';
 import { plainToInstance } from 'class-transformer';
-import { GetDataDto } from '@/modules/url-resolver/dto/get-data.dto';
 import { EncryptedUrl } from '../url-cipher/url-cipher.class';
 
 @Injectable()
@@ -23,14 +22,19 @@ export class AuthorizationMiddleware implements NestMiddleware {
 		const authorization = req.headers['authorization'];
 		if (authorization?.startsWith('Bearer ')) {
 			const accessToken = authorization.split('Bearer ')[1];
-			const isAccessTokenExpired = !(await this.redisClient.get(
-				KeyGenerator.accessTokenKey(accessToken),
-			));
-			if (!isAccessTokenExpired) {
-				const payload = this.jwtService.decode(accessToken);
-				if (payload.status === AccountStatus.ACTIVATED) {
-					req.user = payload;
-					return next();
+			const payload = this.jwtService.decode(accessToken);
+			if (payload.role === Role.GUEST) {
+				req.user = payload
+				return next();
+			} else {
+				const isAccessTokenExpired = !(await this.redisClient.get(
+					KeyGenerator.accessTokenKey(accessToken),
+				));
+				if (!isAccessTokenExpired) {
+					if (payload.status === AccountStatus.ACTIVATED) {
+						req.user = payload;
+						return next();
+					}
 				}
 			}
 		}

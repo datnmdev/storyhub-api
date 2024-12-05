@@ -11,6 +11,7 @@ export enum AuthType {
 }
 
 export enum Role {
+    GUEST = 0,
     MANAGER = 1,
     AUTHOR = 2,
     MODERATOR = 3,

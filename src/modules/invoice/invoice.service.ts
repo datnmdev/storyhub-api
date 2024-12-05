@@ -30,7 +30,7 @@ export class InvoiceService {
             .where("invoice.reader_id = :reader_id", {
                 reader_id: userId
             })
-            .where(new Brackets(qb => {
+            .andWhere(new Brackets(qb => {
                 if (getInvoiceDto.chapterId) {
                     qb.where("invoice.chapter_id = :chapter_id", {
                         chapter_id: getInvoiceDto.chapterId
@@ -49,31 +49,33 @@ export class InvoiceService {
         try {
             await queryRunner.startTransaction();
             const now = new Date();
-            const invoice = await this.getInvoiceBy(readerId, chapterId);
-            if (!invoice) {
-                const chapter = await this.chapterService.getOneBy(chapterId);
-                const currentPrice = await this.priceService.getPriceAt(chapter.storyId, now);
-                const readerWallet = await this.walletService.findWalletBy(readerId);
-                const story = await this.storyService.findOne(chapter.storyId);
-                const authorWallet = await this.walletService.findWalletBy(story.authorId);
-                if (Number(readerWallet.balance) >= currentPrice) {
-                    const invoiceEntity = plainToClass(Invoice, {
-                        readerId,
-                        chapterId,
-                        createdAt: now,
-                        totalAmount: String(currentPrice)
-                    } as Invoice)
-                    await queryRunner.manager.save(invoiceEntity);
-                    await queryRunner.manager.update(Wallet, readerId, {
-                        balance: String(Number(readerWallet.balance) - currentPrice)
-                    });
-                    await queryRunner.manager.update(Wallet, story.authorId, {
-                        balance: String(Number(authorWallet.balance) + Math.floor(currentPrice * 0.9))
-                    })
-                    await queryRunner.commitTransaction();
-                    return true;
-                } else {
-                    throw new NotEnoughMoneyException();
+            const chapter = await this.chapterService.getOneBy(chapterId);
+            const currentPrice = await this.priceService.getPriceAt(chapter.storyId, now);
+            if (currentPrice > 0) {
+                const invoice = await this.getInvoiceBy(readerId, chapterId);
+                if (!invoice) {
+                    const readerWallet = await this.walletService.findWalletBy(readerId);
+                    const story = await this.storyService.findOne(chapter.storyId);
+                    const authorWallet = await this.walletService.findWalletBy(story.authorId);
+                    if (Number(readerWallet.balance) >= currentPrice) {
+                        const invoiceEntity = plainToClass(Invoice, {
+                            readerId,
+                            chapterId,
+                            createdAt: now,
+                            totalAmount: String(currentPrice)
+                        } as Invoice)
+                        await queryRunner.manager.save(invoiceEntity);
+                        await queryRunner.manager.update(Wallet, readerId, {
+                            balance: String(Number(readerWallet.balance) - currentPrice)
+                        });
+                        await queryRunner.manager.update(Wallet, story.authorId, {
+                            balance: String(Number(authorWallet.balance) + Math.floor(currentPrice * 0.9))
+                        })
+                        await queryRunner.commitTransaction();
+                        return true;
+                    } else {
+                        throw new NotEnoughMoneyException();
+                    }
                 }
             }
             return true;
