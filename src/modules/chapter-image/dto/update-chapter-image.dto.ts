@@ -11,12 +11,4 @@ export class UpdateChapterImageDto extends PartialType(CreateChapterImageDto) {
 	@IsNotEmpty()
 	order: number;
 
-	@IsString()
-	@IsNotEmpty()
-	path: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  chapterId: number;
-
 }

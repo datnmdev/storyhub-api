@@ -42,8 +42,11 @@ export class NotificationUserService {
 		return `This action returns a #${id} notificationUser`;
 	}
 
-	update(id: number, updateNotificationUserDto: UpdateNotificationUserDto) {
-		return `This action updates a #${id} notificationUser`;
+	update(updateNotificationUserDto: UpdateNotificationUserDto) {
+		return this.notificationUserRepository.update(
+			updateNotificationUserDto.id,
+			updateNotificationUserDto,
+		);
 	}
 
 	remove(id: number) {

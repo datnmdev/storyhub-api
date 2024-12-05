@@ -104,7 +104,7 @@ export class ModerationGateway
 		// Kiểm tra xem mảng B có trống không
 		if (this.moderators.size === 0) {
 			// Nếu trống, lấy luôn mảng A
-			mergedArray = moderatorsDB.map((moderator) => moderator.id); // Gán giá trị cho mergedArray
+			mergedArray = moderatorsDB; // Gán giá trị cho mergedArray
 		} else {
 			// Tạo một Set để lưu trữ các ID từ mảng B
 			const idsInB = new Set(Array.from(this.moderators.keys()));
@@ -118,6 +118,7 @@ export class ModerationGateway
 					.map((item) => ({ id: item.id })), // Thêm các đối tượng từ A mà không có ID trong B
 			];
 		}
+		console.log('mergedArray', mergedArray);
 		return mergedArray;
 	}
 
@@ -134,7 +135,6 @@ export class ModerationGateway
 		@MessageBody() createModerationRequestDto: CreateModerationRequestDto,
 	): Promise<ModerationRequest> {
 		const responserId = await this.roundRobin(await this.mergedArray());
-
 		const reviewRequest =
 			await this.moderationRequestService.createModorationReq({
 				...createModerationRequestDto,
@@ -167,6 +167,7 @@ export class ModerationGateway
 			reqStatus: number;
 			storyId: number;
 			storyStatus: number;
+			reason: string;
 		},
 	): Promise<ModerationRequest> {
 		try {
@@ -195,7 +196,7 @@ export class ModerationGateway
 			// Gửi thông báo tới tác giả
 			this.server
 				.to(req.requesterId.toString())
-				.emit('story_updated', story);
+				.emit('story_updated', story, data.reason);
 
 			// Gửi phản hồi cho kiểm duyệt viên
 			socket.emit('moderation_request_updated', req);

@@ -47,6 +47,7 @@ export class CreateStoryDto {
 	genres?: number[];
 
 	@IsOptional()
+	@IsString()
 	alias?: string;
 
 	@IsOptional()

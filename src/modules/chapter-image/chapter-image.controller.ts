@@ -7,12 +7,13 @@ import {
 	Param,
 	Delete,
 	Put,
-  Query,
+	Query,
 } from '@nestjs/common';
 import { ChapterImageService } from './chapter-image.service';
 import { CreateChapterImageDto } from './dto/create-chapter-image.dto';
 import { UpdateChapterImageDto } from './dto/update-chapter-image.dto';
 import { ChapterImage } from '@/database/entities/ChapterImage';
+import { DeleteChapterImageDto } from './dto/delete-chapter-image.dto';
 
 @Controller('chapter-image')
 export class ChapterImageController {
@@ -29,7 +30,6 @@ export class ChapterImageController {
 	async findAll(
 		@Query('chapterId') chapterId: string,
 	): Promise<ChapterImage[]> {
-		console.log(chapterId);
 		return await this.chapterImageService.findAll(chapterId);
 	}
 
@@ -38,15 +38,15 @@ export class ChapterImageController {
 		return await this.chapterImageService.findOne(+id);
 	}
 
-	@Put(':id')
+	@Put()
 	async update(
-		@Body() updateChapterImageDto: UpdateChapterImageDto[],
-	): Promise<ChapterImage[]> {
+		@Body() updateChapterImageDto: UpdateChapterImageDto,
+	): Promise<ChapterImage> {
 		return await this.chapterImageService.update(updateChapterImageDto);
 	}
 
-	@Delete(':id')
-	async remove(@Param('id') id: string): Promise<string> {
-		return await this.chapterImageService.remove(+id);
+	@Post('delete')
+	async remove(@Body() chapterImage: DeleteChapterImageDto): Promise<string> {
+		return await this.chapterImageService.remove(chapterImage);
 	}
 }

@@ -64,7 +64,24 @@ export class StoryController {
 
 	@Put()
 	async updateStory(@Body() updateStoryDto: UpdateStoryDto) {
-		return this.storyService.update(updateStoryDto);
+		const result = await this.storyService.update(updateStoryDto);
+		if (updateStoryDto.price) {
+			await this.priceService.create({
+				amount: updateStoryDto.price.amount,
+				startTime: new Date(updateStoryDto.price.startTime),
+				storyId: result.id,
+			});
+		}
+		if (updateStoryDto.alias) {
+			const resultArray = updateStoryDto.alias.split(',').map((item) => {
+				return {
+					name: item.trim(),
+					storyId: result.id,
+				};
+			});
+			await this.aliasService.create(resultArray);
+		}
+		return result;
 	}
 
 	@Delete(':id')

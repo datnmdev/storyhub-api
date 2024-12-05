@@ -9,7 +9,6 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StoryService } from '../story/story.service';
 import { UserService } from '../user/user.service';
-import { ChapterImageService } from '../chapter-image/chapter-image.service';
 
 @Injectable()
 export class FileUploadService {
@@ -18,7 +17,6 @@ export class FileUploadService {
 
 	constructor(
 		private readonly storyService: StoryService,
-		private readonly chapterImageService: ChapterImageService,
 		private readonly userService: UserService,
 	) {
 		this.s3Client = new S3Client({
@@ -84,7 +82,6 @@ export class FileUploadService {
 		const entity = await this.userService.getProfile(userId);
 		if (entity && entity.avatar) {
 			await this.deleteFile(entity.avatar);
-			await this.userService.updateAvatar(userId, fileKey);
 		}
 		return uploadUrl;
 	}
@@ -121,35 +118,32 @@ export class FileUploadService {
 		return uploadUrls;
 	}
 
-	// Delete a file from S3 if it exists
-	async deleteFile(fileKey: string): Promise<void> {
+	// Delete a file from S3
+	async deleteFile(fileName: string): Promise<string> {
 		const params = {
 			Bucket: this.bucketName,
-			Key: fileKey,
+			Key: fileName,
 		};
+
 		try {
-			// Check if the file exists before deleting
+			// Kiểm tra xem file có tồn tại không
 			const headCommand = new HeadObjectCommand(params);
-			try {
-				await this.s3Client.send(headCommand);
-				// If the file exists, proceed with deletion
-				const deleteCommand = new DeleteObjectCommand(params);
-				await this.s3Client.send(deleteCommand);
-				console.log(`File ${fileKey} deleted successfully.`);
-			} catch (error) {
-				if (error.name === 'NotFound') {
-					console.log(
-						`File ${fileKey} does not exist in S3. Skipping deletion.`,
-					);
-				} else {
-					throw error;
-				}
-			}
+			await this.s3Client.send(headCommand);
+
+			// Nếu file tồn tại, tiến hành xóa
+			const deleteCommand = new DeleteObjectCommand(params);
+			await this.s3Client.send(deleteCommand);
+			return `File ${fileName} deleted successfully.`;
 		} catch (error) {
-			console.error('Error deleting file:', error);
-			throw new Error(`Error deleting file from S3: ${error.message}`);
+			if (error.name === 'NotFound') {
+				return `File ${fileName} does not exist in S3.`;
+			}
+			throw new Error(
+				`Error checking or deleting file: ${error.message}`,
+			);
 		}
 	}
+
 	private async checkFolderExistsSequential(path: string): Promise<void> {
 		const folders = path.split('/').filter(Boolean); // Tách đường dẫn thành các cấp thư mục
 		let currentPath = '';

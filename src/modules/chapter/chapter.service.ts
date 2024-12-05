@@ -60,15 +60,6 @@ export class ChapterService {
 			order: { order: 'DESC' },
 			take: take,
 			skip: skip,
-			select: [
-				'id',
-				'order',
-				'name',
-				'content',
-				'status',
-				'createdAt',
-				'updatedAt',
-			],
 			relations: ['chapterImages'],
 		});
 

@@ -37,6 +37,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthorModule } from './modules/author/author.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 
+import { StatisticModule } from './modules/statistic/statistic.module';
 @Module({
 	imports: [
 		ConfigModule,
@@ -78,7 +79,8 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
 		FollowModule,
 		RatingModule,
 		AuthorModule,
-		InvoiceModule
+		InvoiceModule,
+		StatisticModule,
 	],
 })
 export class AppModule implements NestModule {

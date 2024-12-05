@@ -65,7 +65,14 @@ export class StoryService {
 				'createdAt',
 				'updatedAt',
 			],
-			relations: ['aliases', 'country', 'author.user', 'prices', 'genres'],
+			relations: [
+				'aliases',
+				'country',
+				'author.user',
+				'prices',
+				'genres',
+				'moderationRequests',
+			],
 		});
 
 		// Tính toán các thông tin phân trang
@@ -95,7 +102,13 @@ export class StoryService {
 	async findOne(id: number): Promise<Story> {
 		const story = await this.storyRepository.findOne({
 			where: { id },
-			relations: ['aliases', 'country', 'author.user', 'genres'],
+			relations: [
+				'aliases',
+				'country',
+				'author.user',
+				'genres',
+				'prices',
+			],
 		});
 		if (!story) {
 			throw new Error(`Story with ID ${id} not found`);
@@ -106,6 +119,14 @@ export class StoryService {
 	async update(updateStoryDto: UpdateStoryDto): Promise<Story> {
 		// Tìm Story cần cập nhật
 		const story = await this.findOne(updateStoryDto.id);
+		// chưa làm dc cập nhật genres
+		// if (updateStoryDto.genres) {
+		// 	const genres = updateStoryDto.genres.split(',').map(genre => ({
+		// 		name: genre.trim(),
+		// 		storyId: story.id,
+		// 	}));
+		// 	await this.genreRepository.save(genres);
+		// }
 
 		Object.assign(story, updateStoryDto);
 		await this.storyRepository.save(story);

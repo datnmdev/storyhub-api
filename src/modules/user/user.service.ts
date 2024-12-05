@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UrlCipherService } from '@/common/url-cipher/url-cipher.service';
 import UrlResolverUtils from '@/common/utils/url-resolver.util';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -29,7 +30,10 @@ export class UserService {
 		};
 	}
 
-	async updateAvatar(userId: number, avatar: string) {
-		await this.userRepository.update({ id: userId }, { avatar });
-	} 
+
+	async updateProfile(data: UpdateUserDto): Promise<User> {
+		await this.userRepository.update({ id: data.id }, data);
+		
+		return this.getProfile(data.id);
+	}
 }

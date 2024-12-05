@@ -7,31 +7,33 @@ import { LessThanOrEqual, Repository } from 'typeorm';
 
 @Injectable()
 export class PriceService {
-  constructor(
-    @InjectRepository(Price)
-    private priceRepository: Repository<Price>,
-  ) {}
-  async create(createPriceDto: CreatePriceDto): Promise<Price> {
-    return await this.priceRepository.save(createPriceDto);
-  }
+	constructor(
+		@InjectRepository(Price)
+		private priceRepository: Repository<Price>,
+	) {}
+	async create(createPriceDto: CreatePriceDto): Promise<Price> {
+		return await this.priceRepository.save(createPriceDto);
+	}
 
-  async findAll(storyId: number): Promise<Price[]> {
-    return await this.priceRepository.find({ where: { storyId } });
-  }
+	async findAll(storyId: string): Promise<Price[]> {
+		return await this.priceRepository.find({
+			where: [{ storyId: +storyId }],
+		});
+	}
 
-  async findOne(id: number): Promise<Price> {
-    const price = await this.priceRepository.findOne({ where: { id } });
-    if (!price) {
-      throw new Error(`Price with ID ${id} not found`);
-    }
-    return price;
-  }
+	async findOne(id: number): Promise<Price> {
+		const price = await this.priceRepository.findOne({ where: { id } });
+		if (!price) {
+			throw new Error(`Price with ID ${id} not found`);
+		}
+		return price;
+	}
 
-  async update(id: number, updatePriceDto: UpdatePriceDto): Promise<Price> {
-    const price = await this.findOne(id);
-    Object.assign(price, updatePriceDto);
-    return await this.priceRepository.save(price);
-  }
+	async update(id: number, updatePriceDto: UpdatePriceDto): Promise<Price> {
+		const price = await this.findOne(id);
+		Object.assign(price, updatePriceDto);
+		return await this.priceRepository.save(price);
+	}
 
   async remove(id: number): Promise<string> {
     await this.priceRepository.delete(id);

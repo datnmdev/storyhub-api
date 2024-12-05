@@ -4,12 +4,15 @@ import { UpdateChapterImageDto } from './dto/update-chapter-image.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChapterImage } from '@/database/entities/ChapterImage';
 import { Repository } from 'typeorm';
+import { FileUploadService } from '../file-upload/file-upload.service';
+import { DeleteChapterImageDto } from './dto/delete-chapter-image.dto';
 
 @Injectable()
 export class ChapterImageService {
 	constructor(
 		@InjectRepository(ChapterImage)
 		private readonly chapterImageRepository: Repository<ChapterImage>,
+		private readonly fileUploadService: FileUploadService,
 	) {}
 
 	async create(
@@ -39,13 +42,14 @@ export class ChapterImageService {
 	}
 
 	async update(
-		updateChapterImageDto: UpdateChapterImageDto[],
-	): Promise<ChapterImage[]> {
+		updateChapterImageDto: UpdateChapterImageDto,
+	): Promise<ChapterImage> {
 		return await this.chapterImageRepository.save(updateChapterImageDto);
 	}
 
-	async remove(id: number): Promise<string> {
-		await this.chapterImageRepository.delete(id);
-		return `This action removes a #${id} chapterImage`;
+	async remove(chapterImage: DeleteChapterImageDto): Promise<string> {
+		await this.chapterImageRepository.delete(chapterImage.id);
+		await this.fileUploadService.deleteFile(chapterImage.fileName);
+		return `Removed chapter image`;
 	}
 }

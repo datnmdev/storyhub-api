@@ -6,7 +6,8 @@ import {
 	Patch,
 	Param,
 	Delete,
-  Query,
+	Query,
+	Put,
 } from '@nestjs/common';
 import { NotificationUserService } from './notification-user.service';
 import { CreateNotificationUserDto } from './dto/create-notification-user.dto';
@@ -26,8 +27,8 @@ export class NotificationUserController {
 		return this.notificationUserService.create(createNotificationUserDto);
 	}
 
-	@Get('all/:id')
-	async findAll(@Param('id') id: number) {
+	@Get('all')
+	async findAll(@Query('id') id: number) {
 		return this.notificationUserService.findAll(id);
 	}
 
@@ -36,15 +37,9 @@ export class NotificationUserController {
 		return this.notificationUserService.findOne(+id);
 	}
 
-	@Patch(':id')
-	update(
-		@Param('id') id: string,
-		@Body() updateNotificationUserDto: UpdateNotificationUserDto,
-	) {
-		return this.notificationUserService.update(
-			+id,
-			updateNotificationUserDto,
-		);
+	@Put()
+	update(@Body() updateNotificationUserDto: UpdateNotificationUserDto) {
+		return this.notificationUserService.update(updateNotificationUserDto);
 	}
 
 	@Delete(':id')

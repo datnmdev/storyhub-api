@@ -39,7 +39,7 @@ export class FileUploadController {
 
 	@Delete()
 	async deleteFile(@Body('fileName') fileName: string) {
-		await this.fileUploadService.deleteFile(fileName);
-		return { message: 'File deleted successfully' };
+		const message = await this.fileUploadService.deleteFile(fileName);
+		return { message };
 	}
 }
