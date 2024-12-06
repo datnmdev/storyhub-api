@@ -41,4 +41,12 @@ export class AuthorService {
         }
         return null;
     }
+
+    getAll() {
+        return this.authorRepository.find({
+            relations: [
+                "user"
+            ]
+        })
+    }
 }

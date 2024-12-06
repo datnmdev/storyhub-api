@@ -13,6 +13,6 @@ export const databaseConfig = async (
 	database: configService.get('DB_NAME'),
 	entities: ['dist/**/entities/*.{ts,js}'],
 	synchronize: false,
-	logging: true,
+	logging: false,
 	logger: 'advanced-console',
 });
