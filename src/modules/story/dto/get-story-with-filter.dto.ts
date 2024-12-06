@@ -44,13 +44,19 @@ export class GetStoryWithFilterDto extends Pagination {
 
     @Transform(({ value }) => Number(value))
     @IsOptional()
-    @IsNumber()
+    @IsInt()
     countryId?: number
 
     @Transform(({ value }) => Number(value))
     @IsOptional()
-    @IsNumber()
+    @IsInt()
     authorId?: number
+
+    @JsonToObject()
+    @IsOptional()
+    @IsArray()
+    @IsNumber({}, { each: true })
+    genres?: number[]
 
     @JsonToObject<OrderBy>([
         ["updated_at", "DESC"]

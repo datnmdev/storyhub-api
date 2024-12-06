@@ -11,4 +11,9 @@ export class AuthorController {
     getSomeAuthorInfo(@Param('id') id: number) {
         return this.authorService.getSomeAuthorInfo(id);
     }
+
+    @Get()
+    getAll() {
+        return this.authorService.getAll();
+    }
 }
