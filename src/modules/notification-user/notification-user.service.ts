@@ -42,11 +42,18 @@ export class NotificationUserService {
 		return `This action returns a #${id} notificationUser`;
 	}
 
-	update(updateNotificationUserDto: UpdateNotificationUserDto) {
-		return this.notificationUserRepository.update(
-			updateNotificationUserDto.id,
+	async update(updateNotificationUserDto: UpdateNotificationUserDto) {
+		const id = {
+			receiverId: updateNotificationUserDto.receiverId,
+			notificationId: updateNotificationUserDto.notificationId,
+		};
+
+		await this.notificationUserRepository.update(
+			id,
 			updateNotificationUserDto,
 		);
+
+		return 'Cập nhật thành công';
 	}
 
 	remove(id: number) {

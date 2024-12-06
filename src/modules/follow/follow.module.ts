@@ -1,20 +1,13 @@
-import { Module } from "@nestjs/common";
-import { FollowController } from "./follow.controller";
-import { FollowService } from "./follow.service";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { FollowDetail } from "./entities/follow-detail.entity";
+import { Module } from '@nestjs/common';
+import { FollowController } from './follow.controller';
+import { FollowService } from './follow.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { FollowDetail } from './entities/follow-detail.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            FollowDetail
-        ])
-    ],
-    controllers: [
-        FollowController
-    ],
-    providers: [
-        FollowService
-    ]
+	imports: [TypeOrmModule.forFeature([FollowDetail])],
+	controllers: [FollowController],
+	providers: [FollowService],
+	exports: [FollowService],
 })
 export class FollowModule {}

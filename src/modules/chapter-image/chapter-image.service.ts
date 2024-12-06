@@ -6,13 +6,16 @@ import { ChapterImage } from '@/database/entities/ChapterImage';
 import { Repository } from 'typeorm';
 import { FileUploadService } from '../file-upload/file-upload.service';
 import { DeleteChapterImageDto } from './dto/delete-chapter-image.dto';
-
+import { UrlCipherPayload } from '@/common/url-cipher/url-cipher.class';
+import { UrlCipherService } from '@/common/url-cipher/url-cipher.service';
+import UrlResolverUtils from '@/common/utils/url-resolver.util';
 @Injectable()
 export class ChapterImageService {
 	constructor(
 		@InjectRepository(ChapterImage)
 		private readonly chapterImageRepository: Repository<ChapterImage>,
 		private readonly fileUploadService: FileUploadService,
+		private readonly urlCipherService: UrlCipherService,
 	) {}
 
 	async create(
@@ -28,7 +31,18 @@ export class ChapterImageService {
 				order: 'ASC',
 			},
 		});
-		return images.length > 0 ? images : [];
+		return images.map((image) => {
+			const payload: UrlCipherPayload = {
+				url: image.path,
+				expireIn: 4 * 60 * 60, // Thời gian hết hạn là 4 giờ (tính bằng giây)
+				iat: Date.now(), // Thời điểm hiện tại (thời gian tạo)
+			};
+			const encryptedUrl = this.urlCipherService.generate(payload); // Mã hóa URL bằng dịch vụ urlCipherService
+			return {
+				...image, // Sao chép tất cả các thuộc tính của đối tượng image
+				path: UrlResolverUtils.createUrl('/url-resolver', encryptedUrl), // Thay thế path bằng URL đã mã hóa
+			};
+		});
 	}
 
 	async findOne(id: number): Promise<ChapterImage> {

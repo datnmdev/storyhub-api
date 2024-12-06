@@ -9,6 +9,7 @@ import { User } from '@/database/entities/User';
 import { Moderator } from '@/database/entities/Moderator';
 import { NotificationUserModule } from '../modules/notification-user/notification-user.module';
 import { NotificationModule } from '@/modules/notification/notification.module';
+import { FollowModule } from '@/modules/follow/follow.module';
 
 @Module({
 	imports: [
@@ -17,8 +18,9 @@ import { NotificationModule } from '@/modules/notification/notification.module';
 		StoryModule,
 		NotificationModule,
 		NotificationUserModule,
+		FollowModule,
 	],
-	providers: [ModerationGateway,],
-	exports: [ModerationGateway,],
+	providers: [ModerationGateway],
+	exports: [ModerationGateway],
 })
 export class EventsModule {}

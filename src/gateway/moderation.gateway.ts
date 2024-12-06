@@ -20,6 +20,8 @@ import { NotificationService } from '@/modules/notification/notification.service
 import { NotificationUserService } from '@/modules/notification-user/notification-user.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { HandleModerationRequestDto } from '@/modules/moderation-request/dto/handle-moderation-request.dto';
+import { FollowService } from '@/modules/follow/follow.service';
 @WebSocketGateway(3000, { cors: true })
 export class ModerationGateway
 	implements
@@ -44,6 +46,7 @@ export class ModerationGateway
 		private readonly moderationRequestService: ModerationRequestService,
 		private readonly notificationService: NotificationService,
 		private readonly notificationUserService: NotificationUserService,
+		private readonly followService: FollowService,
 	) {
 		console.log(
 			`Websocket server is running on port ${process.env.PORT_WS}`,
@@ -56,33 +59,42 @@ export class ModerationGateway
 
 	private currentIndex = 0;
 
-	async onModuleInit(): Promise<Moderator[]> {
-		const moderators = await this.moderatorRepository.find({
+	async onModuleInit(): Promise<{
+		moderatorsDb: Moderator[];
+	}> {
+		const moderatorsDb = await this.moderatorRepository.find({
 			where: {
 				status: 0,
 			},
 		});
-		return moderators;
+
+		return { moderatorsDb };
 	}
 
 	async handleConnection(client: Socket) {
-		const id = client.handshake.query.id as string;
-		console.log('Client connected:', client.id, id);
-		const role = await this.checkUser(Number(id));
-		switch (role) {
-			case 1:
-				this.managers.set(Number(id), client.id);
-				break;
-			case 2:
-				this.authors.set(Number(id), client.id);
-				break;
-			case 3:
-				this.moderators.set(Number(id), client.id);
-				this.mergedArray(); // Gọi lại hàm roundRobin để cập nhật mergedArray sau khi thêm kiểm duyệt viên mới
-				break;
-			case 4:
-				this.readers.set(Number(id), client.id);
-				break;
+		try {
+			const id = client.handshake.query.id as string;
+			console.log('Client connected:', client.id, id);
+			if (id !== undefined) {
+				const role = await this.checkUser(Number(id));
+				switch (role) {
+					case 1:
+						this.managers.set(Number(id), client.id);
+						break;
+					case 2:
+						this.authors.set(Number(id), client.id);
+						break;
+					case 3:
+						this.moderators.set(Number(id), client.id);
+						this.mergedArray(); // Gọi lại hàm roundRobin để cập nhật mergedArray sau khi thêm kiểm duyệt viên mới
+						break;
+					case 4:
+						this.readers.set(Number(id), client.id);
+						break;
+				}
+			}
+		} catch (error) {
+			console.error('Error handling connection:', error);
 		}
 	}
 
@@ -98,13 +110,13 @@ export class ModerationGateway
 	}
 
 	async mergedArray() {
-		const moderatorsDB = await this.onModuleInit();
+		const { moderatorsDb } = await this.onModuleInit();
 		let mergedArray;
 
 		// Kiểm tra xem mảng B có trống không
 		if (this.moderators.size === 0) {
 			// Nếu trống, lấy luôn mảng A
-			mergedArray = moderatorsDB; // Gán giá trị cho mergedArray
+			mergedArray = moderatorsDb; // Gán giá trị cho mergedArray
 		} else {
 			// Tạo một Set để lưu trữ các ID từ mảng B
 			const idsInB = new Set(Array.from(this.moderators.keys()));
@@ -113,12 +125,11 @@ export class ModerationGateway
 				...Array.from(this.moderators.entries()).map(
 					([id, socketId]) => ({ id, socketId }),
 				), // Chuyển các phần tử của Set thành các object
-				...moderatorsDB
+				...moderatorsDb
 					.filter((item) => !idsInB.has(item.id))
 					.map((item) => ({ id: item.id })), // Thêm các đối tượng từ A mà không có ID trong B
 			];
 		}
-		console.log('mergedArray', mergedArray);
 		return mergedArray;
 	}
 
@@ -150,9 +161,7 @@ export class ModerationGateway
 			status: 0,
 		});
 		// Gửi yêu cầu cho kiểm duyệt viên
-		this.server
-			.to(responserId.toString())
-			.emit('newReviewRequest', reviewRequest);
+		this.server.emit('newReviewRequest', reviewRequest);
 		// Gửi phản hồi cho tác giả
 		socket.emit('review_request_created', reviewRequest);
 		return reviewRequest; // Đảm bảo trả về giá trị
@@ -161,31 +170,24 @@ export class ModerationGateway
 	@SubscribeMessage('handle_moderation_request')
 	async handleModerationRequest(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody()
-		data: {
-			reqId: number;
-			reqStatus: number;
-			storyId: number;
-			storyStatus: number;
-			reason: string;
-		},
+		@MessageBody() handleModerationRequest: HandleModerationRequestDto,
 	): Promise<ModerationRequest> {
 		try {
 			//Thực hiện cập nhật yêu cầu moderation và story song song
 			const [req, story] = await Promise.all([
 				this.moderationRequestService.update(
-					data.reqId,
-					data.reqStatus,
+					handleModerationRequest.reqId,
+					handleModerationRequest.reqStatus,
 				),
 				this.storyService.update({
-					id: data.storyId,
-					status: data.storyStatus,
+					id: handleModerationRequest.storyId,
+					status: handleModerationRequest.storyStatus,
 				}),
 			]);
 
 			const notification = await this.notificationService.create({
 				type: 0,
-				moderationRequestId: data.reqId,
+				moderationRequestId: handleModerationRequest.reqId,
 			});
 			await this.notificationUserService.create({
 				receiverId: req.requesterId,
@@ -194,12 +196,22 @@ export class ModerationGateway
 			});
 
 			// Gửi thông báo tới tác giả
-			this.server
-				.to(req.requesterId.toString())
-				.emit('story_updated', story, data.reason);
+			this.server.emit(
+				'story_handled',
+				story,
+				handleModerationRequest.reason,
+			);
 
 			// Gửi phản hồi cho kiểm duyệt viên
 			socket.emit('moderation_request_updated', req);
+			if (handleModerationRequest.reqStatus == 1) {
+				const mess = await this.sendNotificationForReader(
+					handleModerationRequest.reqId,
+					handleModerationRequest.storyId,
+				);
+				// Gửi thông báo tới độc giả
+				this.server.emit('story_updated', mess);
+			}
 
 			return req; // Trả về cho client nếu cần
 		} catch (error) {
@@ -227,5 +239,34 @@ export class ModerationGateway
 		};
 
 		return roleOrder[account.role.name] || -1; // Trả về thứ tự vai trò nếu có, ngược lại trả về -1
+	}
+
+	// Gửi thông báo cho độc giả về truyện đã cập nhật
+	private async sendNotificationForReader(
+		reqId: number,
+		storyId: number,
+	): Promise<string> {
+		try {
+			const readersFollow =
+				await this.followService.getListReaderId(storyId);
+			if (readersFollow.length > 0) {
+				for (const readerId of readersFollow) {
+					let notification = await this.notificationService.create({
+						type: 0,
+						moderationRequestId: reqId,
+					});
+					let data = await this.notificationUserService.create({
+						receiverId: readerId,
+						notificationId: notification.id,
+						status: 0,
+					});
+				}
+			}
+
+			return 'Thông báo về truyện đã được cập nhật';
+		} catch (error) {
+			console.error('Error sending notification to readers:', error);
+			throw error; // Ném lỗi để phía server xử lý nếu cần
+		}
 	}
 }

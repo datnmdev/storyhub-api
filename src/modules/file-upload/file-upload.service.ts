@@ -8,17 +8,18 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StoryService } from '../story/story.service';
-import { UserService } from '../user/user.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '@/database/entities/User';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class FileUploadService {
 	private readonly s3Client: S3Client;
 	private readonly bucketName = process.env.S3_BUCKET_NAME;
+	@InjectRepository(User)
+	private readonly userRepository: Repository<User>;
 
-	constructor(
-		private readonly storyService: StoryService,
-		private readonly userService: UserService,
-	) {
+	constructor(private readonly storyService: StoryService) {
 		this.s3Client = new S3Client({
 			region: process.env.AWS_REGION,
 			credentials: {
@@ -59,10 +60,12 @@ export class FileUploadService {
 
 		const entity = await this.storyService.findOne(storyId);
 		if (entity && entity.coverImage) {
-			await this.deleteFile(entity.coverImage);
+			await this.deleteFile(
+				entity.coverImage.replace('@internal:aws-s3:', ''),
+			);
 			await this.storyService.update({
 				id: storyId,
-				coverImage: fileKey,
+				coverImage: `@internal:aws-s3:${fileKey}`,
 			});
 		}
 		return uploadUrl;
@@ -79,9 +82,11 @@ export class FileUploadService {
 		// Gọi phương thức generateUploadUrl với fileKey
 		const uploadUrl = await this.generateUploadUrl(fileKey);
 
-		const entity = await this.userService.getProfile(userId);
+		const entity = await this.userRepository.findOneBy({ id: userId });
 		if (entity && entity.avatar) {
-			await this.deleteFile(entity.avatar);
+			await this.deleteFile(
+				entity.avatar.replace('@internal:aws-s3:', ''),
+			);
 		}
 		return uploadUrl;
 	}

@@ -12,7 +12,6 @@ import { PriceModule } from '../price/price.module';
 		TypeOrmModule.forFeature([Story, Genre]),
 		AliasModule,
 		PriceModule,
-		AliasModule,
 	],
 	controllers: [StoryController],
 	providers: [StoryService],

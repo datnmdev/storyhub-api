@@ -88,10 +88,24 @@ export class StoryService {
 		const endCursor =
 			result.length > 0 ? result[result.length - 1].id.toString() : null;
 
-		const edges = result.map((story) => ({
-			cursor: story.id,
-			node: story,
-		}));
+		const edges = result.map((story) => {
+			const payload: UrlCipherPayload = {
+				url: story.coverImage,
+				expireIn: 4 * 60 * 60, // Thời gian hết hạn là 4 giờ (tính bằng giây)
+				iat: Date.now(), // Thời điểm hiện tại (thời gian tạo)
+			};
+			const encryptedUrl = this.urlCipherService.generate(payload); // Mã hóa URL bằng dịch vụ urlCipherService
+			return {
+				cursor: story.id,
+				node: {
+					...story, // Sao chép tất cả các thuộc tính của đối tượng story
+					coverImage: UrlResolverUtils.createUrl(
+						'/url-resolver',
+						encryptedUrl,
+					), // Thay thế coverImage bằng URL đã mã hóa
+				},
+			};
+		});
 		// Trả về định dạng IPaginatedType<Story>
 		return {
 			edges,
@@ -112,17 +126,31 @@ export class StoryService {
 				'author.user',
 				'genres',
 				'prices',
+				'followDetails',
+				'ratingDetails',
+				'comments',
+				'chapters.views',
 			],
 		});
 		if (!story) {
 			throw new Error(`Story with ID ${id} not found`);
 		}
-		return story;
+		return {
+			...story,
+			coverImage: story.coverImage
+				? UrlResolverUtils.createUrl(
+						'/url-resolver',
+						this.urlCipherService.generate({
+							url: story.coverImage,
+							expireIn: 30 * 60 * 60,
+							iat: Date.now(),
+						}),
+					)
+				: story.coverImage,
+		};
 	}
 
 	async update(updateStoryDto: UpdateStoryDto): Promise<Story> {
-		// Tìm Story cần cập nhật
-		const story = await this.findOne(updateStoryDto.id);
 		// chưa làm dc cập nhật genres
 		// if (updateStoryDto.genres) {
 		// 	const genres = updateStoryDto.genres.split(',').map(genre => ({
@@ -132,8 +160,8 @@ export class StoryService {
 		// 	await this.genreRepository.save(genres);
 		// }
 
-		Object.assign(story, updateStoryDto);
-		await this.storyRepository.save(story);
+		const { genres, ...updateData } = updateStoryDto;
+		await this.storyRepository.update(updateStoryDto.id, updateData);
 
 		return await this.findOne(updateStoryDto.id);
 	}
@@ -243,89 +271,104 @@ export class StoryService {
 		}
 
 		const qb = this.storyRepository
-			.createQueryBuilder("story")
-			.where(new Brackets(qb => {
-				if (getStoryWithFilterDto.id) {
-					qb.where("story.id = :id", {
-						id: getStoryWithFilterDto.id
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getStoryWithFilterDto.title) {
-					qb.where("story.title = :title", {
-						title: getStoryWithFilterDto.title
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getStoryWithFilterDto.type) {
-					getStoryWithFilterDto.type.forEach((type, index) => {
-						qb.orWhere(`story.type = :type${index}`, {
-							[`type${index}`]: type
-						})
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getStoryWithFilterDto.status) {
-					getStoryWithFilterDto.status.forEach((status, index) => {
-						qb.orWhere(`story.status = :status${index}`, {
-							[`status${index}`]: status
-						})
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getStoryWithFilterDto.countryId) {
-					qb.where("story.country_id = :country_id", {
-						country_id: getStoryWithFilterDto.countryId
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getStoryWithFilterDto.authorId) {
-					qb.where("story.author_id = :author_id", {
-						author_id: getStoryWithFilterDto.authorId
-					})
-				}
-			}));
+			.createQueryBuilder('story')
+			.where(
+				new Brackets((qb) => {
+					if (getStoryWithFilterDto.id) {
+						qb.where('story.id = :id', {
+							id: getStoryWithFilterDto.id,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getStoryWithFilterDto.title) {
+						qb.where('story.title = :title', {
+							title: getStoryWithFilterDto.title,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getStoryWithFilterDto.type) {
+						getStoryWithFilterDto.type.forEach((type, index) => {
+							qb.orWhere(`story.type = :type${index}`, {
+								[`type${index}`]: type,
+							});
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getStoryWithFilterDto.status) {
+						getStoryWithFilterDto.status.forEach(
+							(status, index) => {
+								qb.orWhere(`story.status = :status${index}`, {
+									[`status${index}`]: status,
+								});
+							},
+						);
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getStoryWithFilterDto.countryId) {
+						qb.where('story.country_id = :country_id', {
+							country_id: getStoryWithFilterDto.countryId,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getStoryWithFilterDto.authorId) {
+						qb.where('story.author_id = :author_id', {
+							author_id: getStoryWithFilterDto.authorId,
+						});
+					}
+				}),
+			);
 
 		if (getStoryWithFilterDto.orderBy) {
-			getStoryWithFilterDto.orderBy.forEach(value => {
+			getStoryWithFilterDto.orderBy.forEach((value) => {
 				qb.addOrderBy(`story.${value[0]}`, value[1]);
-			})
+			});
 		}
-		qb.take(getStoryWithFilterDto.limit)
+		qb.take(getStoryWithFilterDto.limit);
 		qb.skip((getStoryWithFilterDto.page - 1) * getStoryWithFilterDto.limit);
 
 		const stories = await qb.getManyAndCount();
 		return [
-			stories[0].map(story => {
+			stories[0].map((story) => {
 				const payload: UrlCipherPayload = {
 					url: story.coverImage,
 					expireIn: 4 * 60 * 60,
-					iat: Date.now()
-				}
+					iat: Date.now(),
+				};
 				const encryptedUrl = this.urlCipherService.generate(payload);
 				return {
 					...story,
-					coverImage: UrlResolverUtils.createUrl('/url-resolver', encryptedUrl)
-				}
+					coverImage: UrlResolverUtils.createUrl(
+						'/url-resolver',
+						encryptedUrl,
+					),
+				};
 			}),
-			stories[1]
-		]
+			stories[1],
+		];
 	}
 
 	async getGenres(storyId: number) {
 		const story = await this.storyRepository.findOne({
 			where: {
-				id: storyId
+				id: storyId,
 			},
-			relations: [
-				'genres'
-			]
-		})
+			relations: ['genres'],
+		});
 
 		return story.genres;
 	}

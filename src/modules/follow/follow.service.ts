@@ -47,4 +47,15 @@ export class FollowService {
 
         return false;
     }
+
+    async getListReaderId(storyId: number): Promise<number[]> {
+      const followers = await this.followRepository.find({
+        where: {
+          storyId,
+        },
+        select: ['readerId'],
+      });
+  
+      return followers.map((follower) => follower.readerId);
+    }    
 }

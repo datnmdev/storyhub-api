@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,7 +12,10 @@ import { DataSource, Like, Not, Repository } from 'typeorm';
 import { PaginatedChaptersDTO } from '@/pagination/paginated-chapters.dto';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { Brackets } from 'typeorm';
-import { ChapterInfoPublicDto, GetChapterWithFilterDto } from './dto/get-chapter-with-filter.dto';
+import {
+	ChapterInfoPublicDto,
+	GetChapterWithFilterDto,
+} from './dto/get-chapter-with-filter.dto';
 import { ChapterStatus } from '@/common/constants/chapter.constants';
 import { plainToInstance } from 'class-transformer';
 import { PriceService } from '../price/price.service';
@@ -33,8 +41,8 @@ export class ChapterService {
 		private readonly dataSource: DataSource,
 		private readonly walletService: WalletService,
 		private readonly invoiceService: InvoiceService,
-		private readonly urlCipherService: UrlCipherService
-	) { }
+		private readonly urlCipherService: UrlCipherService,
+	) {}
 	async create(createChapterDto: CreateChapterDto): Promise<Chapter> {
 		return this.chapterRepository.save(createChapterDto);
 	}
@@ -74,10 +82,30 @@ export class ChapterService {
 		const endCursor =
 			result.length > 0 ? result[result.length - 1].id.toString() : null;
 
-		const edges = result.map((chapter) => ({
-			cursor: chapter.id,
-			node: chapter,
-		}));
+		const edges = result.map((chapter) => {
+			const chapterImages = chapter.chapterImages;
+			const payload: UrlCipherPayload[] = chapterImages.map((image) => ({
+				url: image.path,
+				expireIn: 4 * 60 * 60, // Thời gian hết hạn là 4 giờ (tính bằng giây)
+				iat: Date.now(), // Thời điểm hiện tại (thời gian tạo)
+			}));
+			const encryptedUrls = payload.map((p) =>
+				this.urlCipherService.generate(p),
+			); // Mã hóa URL bằng dịch vụ urlCipherService
+			return {
+				cursor: chapter.id,
+				node: {
+					...chapter, // Sao chép tất cả các thuộc tính của đối tượng chapter
+					chapterImages: chapterImages.map((image, index) => ({
+						...image,
+						path: UrlResolverUtils.createUrl(
+							'/url-resolver',
+							encryptedUrls[index],
+						), // Thay thế path bằng URL đã mã hóa
+					})),
+				},
+			};
+		});
 		return {
 			edges,
 			totalCount,
@@ -116,72 +144,87 @@ export class ChapterService {
 	}
 
 	// datnmptit
-	async getChapterWithFilter(getChapterWithFilterDto: GetChapterWithFilterDto) {
+	async getChapterWithFilter(
+		getChapterWithFilterDto: GetChapterWithFilterDto,
+	) {
 		const qb = this.chapterRepository
-			.createQueryBuilder("chapter")
-			.where(new Brackets(qb => {
-				if (getChapterWithFilterDto.id) {
-					qb.where("chapter.id = :id", {
-						id: getChapterWithFilterDto.id
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getChapterWithFilterDto.order) {
-					qb.where("chapter.order = :order", {
-						order: getChapterWithFilterDto.order
-					})
-				}
-			}))
-			.andWhere(new Brackets(qb => {
-				if (getChapterWithFilterDto.name) {
-					qb.where("chapter.name = :name", {
-						name: getChapterWithFilterDto.name
-					})
-				}
-			}))
-			.andWhere("chapter.status = :status", {
-				status: ChapterStatus.PUBLISHING
+			.createQueryBuilder('chapter')
+			.where(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.id) {
+						qb.where('chapter.id = :id', {
+							id: getChapterWithFilterDto.id,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.order) {
+						qb.where('chapter.order = :order', {
+							order: getChapterWithFilterDto.order,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.name) {
+						qb.where('chapter.name = :name', {
+							name: getChapterWithFilterDto.name,
+						});
+					}
+				}),
+			)
+			.andWhere('chapter.status = :status', {
+				status: ChapterStatus.PUBLISHING,
 			})
-			.andWhere(new Brackets(qb => {
-				if (getChapterWithFilterDto.storyId) {
-					qb.where("chapter.story_id = :storyId", {
-						storyId: getChapterWithFilterDto.storyId
-					})
-				}
-			}));
+			.andWhere(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.storyId) {
+						qb.where('chapter.story_id = :storyId', {
+							storyId: getChapterWithFilterDto.storyId,
+						});
+					}
+				}),
+			);
 
 		if (getChapterWithFilterDto.orderBy) {
-			getChapterWithFilterDto.orderBy.forEach(value => {
+			getChapterWithFilterDto.orderBy.forEach((value) => {
 				qb.addOrderBy(`chapter.${value[0]}`, value[1]);
-			})
+			});
 		}
 		qb.take(getChapterWithFilterDto.limit);
-		qb.skip((getChapterWithFilterDto.page - 1) * getChapterWithFilterDto.limit);
+		qb.skip(
+			(getChapterWithFilterDto.page - 1) * getChapterWithFilterDto.limit,
+		);
 		const chapters = await qb.getManyAndCount();
 		return [
 			plainToInstance(ChapterInfoPublicDto, chapters[0]),
-			chapters[1]
-		]
+			chapters[1],
+		];
 	}
 
 	async getChapterContent(user: User, chapterId: number) {
 		const now = new Date();
 		const chapter = await this.chapterRepository.findOne({
 			where: {
-				id: chapterId
+				id: chapterId,
 			},
-			relations: [
-				"story",
-				"chapterImages"
-			]
-		})
+			relations: ['story', 'chapterImages'],
+		});
 
 		if (chapter) {
-			const currentPrice = await this.priceService.getPriceAt(chapter.storyId, now);
+			const currentPrice = await this.priceService.getPriceAt(
+				chapter.storyId,
+				now,
+			);
 			if (currentPrice > 0) {
 				if (user.role === Role.READER) {
-					const isPaid = await this.invoiceService.getInvoiceBy(user.userId, chapterId);
+					const isPaid = await this.invoiceService.getInvoiceBy(
+						user.userId,
+						chapterId,
+					);
 					// Kiểm tra thanh toán hay chưa?
 					if (!isPaid) {
 						throw new NotEnoughMoneyException();
@@ -195,15 +238,20 @@ export class ChapterService {
 			if (chapter.story.type === StoryType.COMIC) {
 				return plainToInstance(ImageContentDto, {
 					...chapter,
-					images: chapter.chapterImages.map(chapterImage => ({
+					images: chapter.chapterImages.map((chapterImage) => ({
 						...chapterImage,
-						path: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
-							url: chapterImage.path,
-							expireIn: 4 * 60 * 60,
-							iat: Date.now()
-						} as UrlCipherPayload)))
-					}))
-				} as ImageContentDto)
+						path: UrlResolverUtils.createUrl(
+							'/url-resolver',
+							this.urlCipherService.generate(
+								plainToInstance(UrlCipherPayload, {
+									url: chapterImage.path,
+									expireIn: 4 * 60 * 60,
+									iat: Date.now(),
+								} as UrlCipherPayload),
+							),
+						),
+					})),
+				} as ImageContentDto);
 			} else {
 				return plainToInstance(TextContentDto, chapter);
 			}
@@ -215,8 +263,8 @@ export class ChapterService {
 	getOneBy(id: number) {
 		return this.chapterRepository.findOne({
 			where: {
-				id
-			}
-		})
+				id,
+			},
+		});
 	}
 }
