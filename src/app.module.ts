@@ -38,6 +38,7 @@ import { AuthorModule } from './modules/author/author.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 
 import { StatisticModule } from './modules/statistic/statistic.module';
+import { ModeratorModule } from './modules/moderator/moderator.module';
 @Module({
 	imports: [
 		ConfigModule,
@@ -81,6 +82,7 @@ import { StatisticModule } from './modules/statistic/statistic.module';
 		AuthorModule,
 		InvoiceModule,
 		StatisticModule,
+		ModeratorModule
 	],
 })
 export class AppModule implements NestModule {
@@ -126,7 +128,8 @@ export class AppModule implements NestModule {
 				{
 					path: "invoice",
 					method: RequestMethod.POST
-				}
+				},
+				"moderator"
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(
