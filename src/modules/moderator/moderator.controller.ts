@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ModeratorService } from "./moderator.service";
 import { GetModeratorDto } from "./dto/get-moderator.dto";
 import { Roles } from "@/common/decorators/roles.decorator";
@@ -7,6 +7,8 @@ import { RolesGuard } from "@/common/guards/roles.guard";
 import { CreateModeratorDto } from "./dto/create-moderator.dto";
 import { User } from "@/common/decorators/user.decorator";
 import { CheckCccdDto } from "./dto/check-cccd.dto";
+import { UpdateModeratorDto } from "./dto/update-moderator.dto";
+import { EmployeeManagementRoleGuard } from "./moderator.guard";
 
 @Controller('moderator')
 export class ModeratorController {
@@ -31,5 +33,12 @@ export class ModeratorController {
     @UseGuards(RolesGuard)
     createModerator(@User('userId') userId: number, @Body() createModeratorDto: CreateModeratorDto) {
         return this.moderatorService.createModerator(userId, createModeratorDto);
+    }
+
+    @Put()
+    @Roles(Role.MANAGER)
+    @UseGuards(RolesGuard, EmployeeManagementRoleGuard)
+    updateModerator(@Body() updateModeratorDto: UpdateModeratorDto) {
+        return this.moderatorService.updateModerator(updateModeratorDto);
     }
 }

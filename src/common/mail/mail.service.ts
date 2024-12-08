@@ -30,4 +30,18 @@ export class MailService {
         }
       })
   }
+
+  async sendAccountInfoToModerator(email: string, password: string, to: string) {
+    return this.mailerService
+      .sendMail({
+        to,
+        from: 'no-reply@storyhub.com',
+        subject: 'Cung cấp tài khoản đăng nhập vào hệ thống Storyhub cho kiểm duyệt viên',
+        template: './send-account-info-for-moderator',
+        context: {
+          email,
+          password
+        }
+      })
+  }
 }

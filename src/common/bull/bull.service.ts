@@ -13,12 +13,14 @@ export class BullService {
     ) {}
 
     addJob(name: JobName, data: any) {
-        return this.mailQueue.add(name, data);
+        return this.mailQueue.add(name, data, {
+            attempts: 10
+        });
     }
 
     addDeleteFileAwsS3Job(data: any) {
         return this.deleteFileAwsS3.add(JobName.DELETE_FILE_AWS_S3, data, {
-            attempts: 5
+            attempts: 10
         })
     }
 }

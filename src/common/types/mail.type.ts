@@ -3,3 +3,9 @@ export interface SendOtpData {
     otp: string
     to: string
 }
+
+export interface SendAccountInfoToModeratorData {
+    email: string
+    password: string
+    to: string
+}

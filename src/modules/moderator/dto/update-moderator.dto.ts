@@ -1,21 +1,21 @@
+import { ModeratorStatus } from "@/common/constants/moderator.constants";
 import { Gender } from "@/common/constants/user.constants";
 import { OneOf } from "@/common/decorators/validation.decorator";
 import { Exclude, Expose, Transform } from "class-transformer";
-import { IsDate, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MinLength } from "class-validator";
+import { IsDate, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from "class-validator";
 import moment from "moment";
 
-export class CreateModeratorDto {
+export class UpdateModeratorDto {
+    @Transform(({ value }) => Number(value))
     @IsNotEmpty()
-    @IsString()
-    @IsEmail()
-    email: string
+	@IsInt()
+	id: number;
 
-    @IsNotEmpty()
     @IsString()
     @Matches(/^[0-9]{12}$/)
     cccd: string
 
-    @IsNotEmpty()
+    @IsOptional()
 	@IsString()
 	@MinLength(1)
 	name: string;
@@ -27,13 +27,13 @@ export class CreateModeratorDto {
         }
         return value;
     })
-    @IsNotEmpty()
+    @IsOptional()
 	@IsDate()
 	dob: Date;
 
     @Transform(({ value }) => Number(value))
-    @IsNotEmpty()
-    @IsNumber()
+    @IsOptional()
+    @IsInt()
     @OneOf([
         Gender.MALE,
         Gender.FEMALE,
@@ -41,15 +41,24 @@ export class CreateModeratorDto {
     ])
     gender: number
 
-    @IsNotEmpty()
+    @IsOptional()
 	@IsString()
 	@Matches((/^[0-9]{10,11}$/))
 	phone: string;
 
-    @IsNotEmpty()
+    @IsOptional()
 	@IsString()
 	@MinLength(1)
 	address: string;
+
+    @Transform(({ value }) => Number(value))
+    @IsOptional()
+    @IsInt()
+    @OneOf([
+        ModeratorStatus.WORKING,
+        ModeratorStatus.RESIGNED
+    ])
+    status: number
 
     @Transform(({ value }) => {
         const momentDate = moment(value, "YYYY-MM-DD", true);
@@ -58,7 +67,7 @@ export class CreateModeratorDto {
         }
         return value;
     })
-    @IsNotEmpty()
+    @IsOptional()
 	@IsDate()
 	doj: Date;
 
@@ -68,13 +77,10 @@ export class CreateModeratorDto {
 }
 
 @Exclude()
-export class CreateEmailPasswordCredentialDataDto {
+export class UpdateUserDataDto {
     @Expose()
-    email: string
-}
+    id: number;
 
-@Exclude()
-export class CreateUserDataDto {
     @Expose()
     name: string;
 
@@ -99,12 +105,15 @@ export class CreateUserDataDto {
 }
 
 @Exclude()
-export class CreateModeratorDataDto {
+export class UpdateModeratorDataDto {
     @Expose()
     cccd: string;
 
     @Expose()
     address: string;
+
+    @Expose()
+    status: number;
 
     @Expose()
     @Transform(({ value }) => {
