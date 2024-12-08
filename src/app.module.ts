@@ -129,7 +129,18 @@ export class AppModule implements NestModule {
 					path: "invoice",
 					method: RequestMethod.POST
 				},
-				"moderator"
+				{
+					path: "moderator",
+					method: RequestMethod.GET
+				},
+				{
+					path: "moderator",
+					method: RequestMethod.POST
+				},
+				{
+					path: "file-upload/get-pre-upload-avatar-url",
+					method: RequestMethod.GET
+				}
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(

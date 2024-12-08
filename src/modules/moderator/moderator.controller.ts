@@ -6,12 +6,18 @@ import { Role } from "@/common/constants/account.constants";
 import { RolesGuard } from "@/common/guards/roles.guard";
 import { CreateModeratorDto } from "./dto/create-moderator.dto";
 import { User } from "@/common/decorators/user.decorator";
+import { CheckCccdDto } from "./dto/check-cccd.dto";
 
 @Controller('moderator')
 export class ModeratorController {
     constructor(
         private readonly moderatorService: ModeratorService
     ) {}
+
+    @Get('/check-cccd')
+    checkCccd(@Query() checkCccdDto: CheckCccdDto) {
+        return this.moderatorService.isCccdExisted(checkCccdDto.cccd);
+    }
 
     @Get()
     @Roles(Role.MANAGER)
