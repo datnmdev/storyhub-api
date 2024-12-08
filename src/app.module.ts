@@ -138,6 +138,10 @@ export class AppModule implements NestModule {
 					method: RequestMethod.POST
 				},
 				{
+					path: "moderator",
+					method: RequestMethod.PUT
+				},
+				{
 					path: "file-upload/get-pre-upload-avatar-url",
 					method: RequestMethod.GET
 				}

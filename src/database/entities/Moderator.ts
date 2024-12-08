@@ -21,6 +21,9 @@ export class Moderator {
 	@Column('varchar', { name: 'cccd', length: 12, unique: true })
 	cccd: string;
 
+	@Column('text', { name: 'address' })
+	address: string;
+
 	@Column('int', {
 		name: 'status',
 		comment:
