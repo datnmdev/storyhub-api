@@ -10,6 +10,7 @@ import { UrlCipherPayload } from "@/common/url-cipher/url-cipher.class";
 import { CreateModeratorDto } from "./dto/create-moderator.dto";
 import { User } from "../user/entities/user.entity";
 import { ModeratorStatus } from "@/common/constants/moderator.constants";
+import { UrlPrefix } from "@/common/constants/url-resolver.constants";
 
 @Injectable()
 export class ModeratorService {
@@ -20,8 +21,20 @@ export class ModeratorService {
         private readonly dataSource: DataSource
     ) { }
 
+    async isCccdExisted(cccd: string) {
+        const moderator = await this.moderatorRepository.findOne({
+            where: {
+                cccd
+            }
+        })
+        if (moderator) {
+            return true;
+        }
+        return false;
+    }
+
     async getModeratorWithFilter(getModeratorDto: GetModeratorDto) {
-        const moderators = await this.moderatorRepository
+        const qb = await this.moderatorRepository
             .createQueryBuilder('moderator')
             .innerJoin('moderator.user', 'user')
             .where(new Brackets(qb => {
@@ -76,11 +89,13 @@ export class ModeratorService {
                     })
                 }
             }))
+            .orderBy("user.updated_at", "DESC")
             .select('*')
             .limit(getModeratorDto.limit)
-            .offset((getModeratorDto.page - 1) * getModeratorDto.limit)
-            .getRawMany();
+            .offset((getModeratorDto.page - 1) * getModeratorDto.limit);
 
+        const moderators = await qb.getRawMany();
+        const count = await qb.getCount();
         return [
             moderators.map(moderator => {
                 moderator = {
@@ -98,24 +113,28 @@ export class ModeratorService {
                 delete moderator['manager_id'];
                 return moderator;
             }),
-            moderators.length
+            count
         ]
     }
 
     async createModerator(managerId: number, createModeratorDto: CreateModeratorDto) {
-        console.log(createModeratorDto);
-        
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
             await queryRunner.startTransaction();
-            const userEntity = plainToInstance(User, createModeratorDto);
+            const userEntity = plainToInstance(User, createModeratorDto, {
+                exposeUnsetFields: false
+            });
+            if (userEntity.avatar !== undefined) {
+                userEntity.avatar = UrlPrefix.INTERNAL_AWS_S3.concat(userEntity.avatar);
+            }
             const newUser = await queryRunner.manager.save(userEntity);
 
             const moderatorEntity = plainToInstance(Moderator, {
                 id: newUser.id,
                 cccd: createModeratorDto.cccd,
                 status: ModeratorStatus.WORKING,
+                doj: createModeratorDto.doj,
                 managerId
             } as Moderator)
             const newModerator = await queryRunner.manager.save(moderatorEntity);

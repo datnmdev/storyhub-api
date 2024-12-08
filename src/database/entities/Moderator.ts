@@ -18,7 +18,7 @@ export class Moderator {
 	@PrimaryColumn('int', { primary: true, name: 'id' })
 	id: number;
 
-	@Column('varchar', { name: 'cccd', length: 12 })
+	@Column('varchar', { name: 'cccd', length: 12, unique: true })
 	cccd: string;
 
 	@Column('int', {
@@ -28,6 +28,12 @@ export class Moderator {
 		default: () => "'0'",
 	})
 	status: number;
+
+	@Column('date', {
+		name: 'doj',
+		nullable: false
+	})
+	doj: Date;
 
 	@Column('int', { name: 'manager_id' })
 	managerId: number;

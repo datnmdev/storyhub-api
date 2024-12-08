@@ -197,7 +197,21 @@ export class FileUploadService {
 		await this.s3Client.send(putCommand);
 	}
 
+	// datnmptit
 	getAwsS3Client() {
 		return this.s3Client;
+	}
+
+	generatePreUploadUrl(fileKey: string, fileType: string) {
+		const params = {
+			Bucket: this.bucketName,
+			Key: fileKey,
+			ACL: 'public-read' as ObjectCannedACL,
+			ContentType: fileType
+		};
+		const command = new PutObjectCommand(params);
+		return getSignedUrl(this.s3Client, command, {
+			expiresIn: 7200
+		});
 	}
 }
