@@ -9,6 +9,7 @@ import { Roles } from "@/common/decorators/roles.decorator";
 import { Role } from "@/common/constants/account.constants";
 import { RolesGuard } from "@/common/guards/roles.guard";
 import { GetRatingDto } from "./dto/get-rating.dto";
+import { GetTopRatingStoryDto } from "./dto/get-top-rating-story.dto";
 
 @Controller("rating")
 export class RatingController {
@@ -45,5 +46,10 @@ export class RatingController {
     @UseGuards(RolesGuard)
     updateRating(@User('userId') userId: number, @Body() updateRatingDto: UpdateRatingDto) {
         return this.ratingService.update(userId, updateRatingDto);
+    }
+
+    @Get("get-top")
+    getTopRatingStory(@Query() getTopRatingStoryDto: GetTopRatingStoryDto) {
+        return this.ratingService.getTopRatingStory(getTopRatingStoryDto);
     }
 }
