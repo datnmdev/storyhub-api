@@ -8,6 +8,7 @@ import { Role } from "@/common/constants/account.constants";
 import { RolesGuard } from "@/common/guards/roles.guard";
 import { FollowDto } from "./dto/follow.dto";
 import { UnfollowDto } from "./dto/unfollow.dto";
+import { GetTopFollowStoryDto } from "./dto/get-top-follow-story.dto";
 
 @Controller('follow')
 export class FollowController {
@@ -39,5 +40,10 @@ export class FollowController {
     @UseGuards(RolesGuard)
     unfollow(@User('userId') userId: number, @Query() unfollowDto: UnfollowDto) {
         return this.followService.unfollow(userId, unfollowDto.storyId);
+    }
+
+    @Get("get-top")
+    getTopFollowStory(@Query() getTopFollowStoryDto: GetTopFollowStoryDto) {
+        return this.followService.getTopFollowStory(getTopFollowStoryDto);
     }
 }
