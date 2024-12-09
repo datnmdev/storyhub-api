@@ -9,6 +9,7 @@ import { RolesGuard } from "@/common/guards/roles.guard";
 import { FollowDto } from "./dto/follow.dto";
 import { UnfollowDto } from "./dto/unfollow.dto";
 import { GetTopFollowStoryDto } from "./dto/get-top-follow-story.dto";
+import { GetFollowWithFilterDto } from "./dto/get-follow-with-filter.dto";
 
 @Controller('follow')
 export class FollowController {
@@ -45,5 +46,19 @@ export class FollowController {
     @Get("get-top")
     getTopFollowStory(@Query() getTopFollowStoryDto: GetTopFollowStoryDto) {
         return this.followService.getTopFollowStory(getTopFollowStoryDto);
+    }
+
+    @Get('/filter')
+    @Roles(Role.READER)
+    @UseGuards(RolesGuard)
+    getFollowWithFilter(@User('userId') userId: number, @Query() getFollowWithFilterDto: GetFollowWithFilterDto) {
+        return this.followService.getFollowWithFilter(userId, getFollowWithFilterDto);
+    }
+
+    @Delete('/all')
+    @Roles(Role.READER)
+    @UseGuards(RolesGuard)
+    deleteAllFollow(@User('userId') userId: number) {
+        return this.followService.deleteAll(userId);
     }
 }

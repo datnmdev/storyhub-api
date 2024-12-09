@@ -121,6 +121,14 @@ export class AppModule implements NestModule {
 					method: RequestMethod.GET
 				},
 				{
+					path: "follow/filter",
+					method: RequestMethod.GET
+				},
+				{
+					path: "follow/all",
+					method: RequestMethod.DELETE
+				},
+				{
 					path: "invoice",
 					method: RequestMethod.GET
 				},

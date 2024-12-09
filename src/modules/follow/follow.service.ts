@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { DataSource, Repository } from "typeorm";
+import { Brackets, DataSource, Repository } from "typeorm";
 import { FollowDetail } from "./entities/follow-detail.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GetTopFollowStoryDto } from "./dto/get-top-follow-story.dto";
@@ -8,6 +8,8 @@ import { plainToInstance } from "class-transformer";
 import UrlResolverUtils from "@/common/utils/url-resolver.util";
 import { UrlCipherPayload } from "@/common/url-cipher/url-cipher.class";
 import { UrlCipherService } from "@/common/url-cipher/url-cipher.service";
+import { GetFollowWithFilterDto } from "./dto/get-follow-with-filter.dto";
+import { ChapterInfoPublicDto } from "../chapter/dto/get-chapter-with-filter.dto";
 
 @Injectable()
 export class FollowService {
@@ -126,5 +128,59 @@ export class FollowService {
                 .createQueryBuilder(Story, 'story')
                 .getCount()
         ]
+    }
+
+    async getFollowWithFilter(userId: number, getFollowWithFilterDto: GetFollowWithFilterDto) {
+        try {
+            
+        } catch (error) {
+            
+        }
+        const results = await this.followRepository
+            .createQueryBuilder('follow')
+            .innerJoinAndSelect('follow.story', 'story')
+            .innerJoinAndSelect('story.chapters', 'chapter')
+            .where('follow.reader_id = :readerId', {
+                readerId: userId
+            })
+            .andWhere(new Brackets(qb => {
+                if (getFollowWithFilterDto.storyId !== undefined) {
+                    qb.andWhere('follow.story_id = :storyId', {
+                        storyId: getFollowWithFilterDto.storyId
+                    })
+                }
+            }))
+            .orderBy('follow.createdAt', 'DESC')
+            .addOrderBy('follow.storyId', 'DESC')
+            .take(getFollowWithFilterDto.limit)
+            .skip((getFollowWithFilterDto.page - 1) * getFollowWithFilterDto.limit)
+            .getManyAndCount();
+
+        return [
+            results[0].map(follow => {
+                return {
+                    ...follow,
+                    story: {
+                        ...follow.story,
+                        coverImage: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
+                            url: follow.story.coverImage,
+                            expireIn: 4 * 60 * 60,
+                            iat: Date.now()
+                        } as UrlCipherPayload))),
+                        chapters: follow.story.chapters.map(chapter => {
+                            return plainToInstance(ChapterInfoPublicDto, chapter);
+                        })
+                    }
+                }
+            }),
+            results[1]
+        ]
+    }
+
+    async deleteAll(userId: number) {
+        await this.followRepository.delete({
+            readerId: userId
+        })
+        return true;
     }
 }
