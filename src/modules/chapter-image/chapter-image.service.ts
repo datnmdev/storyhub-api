@@ -57,8 +57,12 @@ export class ChapterImageService {
 
 	async update(
 		updateChapterImageDto: UpdateChapterImageDto,
-	): Promise<ChapterImage> {
-		return await this.chapterImageRepository.save(updateChapterImageDto);
+	): Promise<string> {
+		const updatedImage = await this.chapterImageRepository.update(
+			updateChapterImageDto.id,
+			updateChapterImageDto,
+		);
+		return 'Cập nhật hình ảnh chương thành công';
 	}
 
 	async remove(chapterImage: DeleteChapterImageDto): Promise<string> {

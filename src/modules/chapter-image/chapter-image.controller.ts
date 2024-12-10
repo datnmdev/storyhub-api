@@ -41,7 +41,7 @@ export class ChapterImageController {
 	@Put()
 	async update(
 		@Body() updateChapterImageDto: UpdateChapterImageDto,
-	): Promise<ChapterImage> {
+	): Promise<string> {
 		return await this.chapterImageService.update(updateChapterImageDto);
 	}
 

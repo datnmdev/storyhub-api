@@ -13,6 +13,9 @@ export class HandleModerationRequestDto {
 	@IsNumber()
 	storyId: number;
 
+  @IsOptional()
+  processAt?: Date;
+
 	@IsNotEmpty()
 	@IsNumber()
 	storyStatus: number;
