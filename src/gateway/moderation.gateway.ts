@@ -178,6 +178,7 @@ export class ModerationGateway
 				this.moderationRequestService.update(
 					handleModerationRequest.reqId,
 					handleModerationRequest.reqStatus,
+					handleModerationRequest.reason,
 				),
 				this.storyService.update({
 					id: handleModerationRequest.storyId,
@@ -204,14 +205,14 @@ export class ModerationGateway
 
 			// Gửi phản hồi cho kiểm duyệt viên
 			socket.emit('moderation_request_updated', req);
-			if (handleModerationRequest.reqStatus == 1) {
-				const mess = await this.sendNotificationForReader(
-					handleModerationRequest.reqId,
-					handleModerationRequest.storyId,
-				);
-				// Gửi thông báo tới độc giả
-				this.server.emit('story_updated', mess);
-			}
+			// if (handleModerationRequest.reqStatus == 1) {
+			// 	const mess = await this.sendNotificationForReader(
+			// 		handleModerationRequest.reqId,
+			// 		handleModerationRequest.storyId,
+			// 	);
+			// 	// Gửi thông báo tới độc giả
+			// 	this.server.emit('story_updated', mess);
+			// }
 
 			return req; // Trả về cho client nếu cần
 		} catch (error) {

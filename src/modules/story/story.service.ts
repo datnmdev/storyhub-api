@@ -160,7 +160,7 @@ export class StoryService {
 		// 	await this.genreRepository.save(genres);
 		// }
 
-		const { genres, ...updateData } = updateStoryDto;
+		const { genres,price,alias, ...updateData } = updateStoryDto;
 		await this.storyRepository.update(updateStoryDto.id, updateData);
 
 		return await this.findOne(updateStoryDto.id);

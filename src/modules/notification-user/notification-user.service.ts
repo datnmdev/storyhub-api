@@ -22,7 +22,10 @@ export class NotificationUserService {
 		const notifications = await this.notificationUserRepository.find({
 			where: { receiverId: id },
 			order: { createdAt: 'DESC' },
-			relations: ['notification.moderationRequest'],
+			relations: [
+				'notification.moderationRequest',
+				'notification.moderationRequest.story',
+			],
 		});
 		const filteredNotifications = notifications.map((notification) => {
 			return {

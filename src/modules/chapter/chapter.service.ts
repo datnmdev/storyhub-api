@@ -137,7 +137,7 @@ export class ChapterService {
 	async remove(id: number): Promise<string> {
 		// Tìm chapter theo ID
 		const chapter = await this.findOne(id);
-
+    console.log(id)
 		// Cập nhật trạng thái chapter
 		await this.chapterRepository.update({ id: id }, { status: 6 });
 		return `This action removes a #${id} chapter`;
