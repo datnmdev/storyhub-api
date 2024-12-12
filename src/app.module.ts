@@ -39,6 +39,7 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
 
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { ModeratorModule } from './modules/moderator/moderator.module';
+import { ReadingHistoryModule } from './modules/reading-history/reading-history.module';
 @Module({
 	imports: [
 		ConfigModule,
@@ -82,7 +83,8 @@ import { ModeratorModule } from './modules/moderator/moderator.module';
 		AuthorModule,
 		InvoiceModule,
 		StatisticModule,
-		ModeratorModule
+		ModeratorModule,
+		ReadingHistoryModule
 	],
 })
 export class AppModule implements NestModule {
@@ -155,7 +157,8 @@ export class AppModule implements NestModule {
 					method: RequestMethod.GET
 				},
 				"auth/verify-change-password-info",
-				"auth/change-password"
+				"auth/change-password",
+				'reading-history'
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(
