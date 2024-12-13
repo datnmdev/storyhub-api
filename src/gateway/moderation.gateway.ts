@@ -22,6 +22,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HandleModerationRequestDto } from '@/modules/moderation-request/dto/handle-moderation-request.dto';
 import { FollowService } from '@/modules/follow/follow.service';
+import { ChapterService } from '@/modules/chapter/chapter.service';
 @WebSocketGateway(3000, { cors: true })
 export class ModerationGateway
 	implements
@@ -47,6 +48,7 @@ export class ModerationGateway
 		private readonly notificationService: NotificationService,
 		private readonly notificationUserService: NotificationUserService,
 		private readonly followService: FollowService,
+		private readonly chapterService: ChapterService,
 	) {
 		console.log(
 			`Websocket server is running on port ${process.env.PORT_WS}`,
@@ -173,8 +175,9 @@ export class ModerationGateway
 		@MessageBody() handleModerationRequest: HandleModerationRequestDto,
 	): Promise<ModerationRequest> {
 		try {
+			console.log(handleModerationRequest);
 			//Thực hiện cập nhật yêu cầu moderation và story song song
-			const [req, story] = await Promise.all([
+			const [req, story, chapter] = await Promise.all([
 				this.moderationRequestService.update(
 					handleModerationRequest.reqId,
 					handleModerationRequest.reqStatus,
@@ -183,6 +186,10 @@ export class ModerationGateway
 				this.storyService.update({
 					id: handleModerationRequest.storyId,
 					status: handleModerationRequest.storyStatus,
+				}),
+				this.chapterService.update({
+					id: handleModerationRequest.chapterId,
+					status: handleModerationRequest.chapterStatus,
 				}),
 			]);
 
@@ -205,14 +212,6 @@ export class ModerationGateway
 
 			// Gửi phản hồi cho kiểm duyệt viên
 			socket.emit('moderation_request_updated', req);
-			// if (handleModerationRequest.reqStatus == 1) {
-			// 	const mess = await this.sendNotificationForReader(
-			// 		handleModerationRequest.reqId,
-			// 		handleModerationRequest.storyId,
-			// 	);
-			// 	// Gửi thông báo tới độc giả
-			// 	this.server.emit('story_updated', mess);
-			// }
 
 			return req; // Trả về cho client nếu cần
 		} catch (error) {

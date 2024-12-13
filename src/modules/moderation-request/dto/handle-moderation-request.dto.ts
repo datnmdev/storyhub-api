@@ -9,18 +9,26 @@ export class HandleModerationRequestDto {
 	@IsNumber()
 	reqStatus: number;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsNumber()
-	storyId: number;
+	storyId?: number;
 
-  @IsOptional()
-  processAt?: Date;
+	@IsOptional()
+	processAt?: Date;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsNumber()
-	storyStatus: number;
+	storyStatus?: number;
 
 	@IsOptional()
 	@IsString()
 	reason?: string;
+
+	@IsNotEmpty()
+	@IsNumber()
+	chapterId: number;
+
+	@IsNotEmpty()
+	@IsNumber()
+	chapterStatus: number;
 }

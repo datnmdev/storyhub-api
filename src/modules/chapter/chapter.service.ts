@@ -128,16 +128,18 @@ export class ChapterService {
 	}
 
 	async update(updateChapterDto: UpdateChapterDto): Promise<Chapter> {
-		const chapter = await this.findOne(updateChapterDto.id);
-		Object.assign(chapter, updateChapterDto);
-		await this.chapterRepository.save(chapter);
+		await this.findOne(updateChapterDto.id);
+		await this.chapterRepository.update(
+			updateChapterDto.id,
+			updateChapterDto,
+		);
 		return await this.findOne(updateChapterDto.id);
 	}
 
 	async remove(id: number): Promise<string> {
 		// Tìm chapter theo ID
 		const chapter = await this.findOne(id);
-    console.log(id)
+		console.log(id);
 		// Cập nhật trạng thái chapter
 		await this.chapterRepository.update({ id: id }, { status: 6 });
 		return `This action removes a #${id} chapter`;
