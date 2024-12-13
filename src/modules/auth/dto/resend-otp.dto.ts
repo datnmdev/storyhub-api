@@ -8,7 +8,8 @@ export class ResendOtpDto {
     @OneOf([
         OtpVerificationType.SIGN_IN,
         OtpVerificationType.SIGN_UP,
-        OtpVerificationType.FORGOT_PASSWORD
+        OtpVerificationType.FORGOT_PASSWORD,
+        OtpVerificationType.CHANGE_PASSWORD
     ])
     type: number
 
