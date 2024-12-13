@@ -25,7 +25,7 @@ export class ModerationRequestService {
 
 	async findAll(
 		query: PaginateModerationReqDTO,
-	): Promise<IPaginatedType<ModerationRequest>> {
+	): Promise<IPaginatedType<any>> {
 		const take = query.take || 10;
 		const page = query.page || 1;
 		const skip = (page - 1) * take;
@@ -36,6 +36,7 @@ export class ModerationRequestService {
 			...(type ? { type: type } : {}),
 			status: 0,
 		};
+		console.log(type);
 
 		const [result, totalCount] =
 			await this.moderationReqRepository.findAndCount({
@@ -52,18 +53,19 @@ export class ModerationRequestService {
 					'createdAt',
 					'requesterId',
 					'responserId',
-					'storyId',
+					'chapterId',
 				],
 				relations: [
-					'story',
-					'story.aliases',
-					'story.country',
-					'story.prices',
-					'story.genres',
-					'story.author.user',
+					'chapter.story',
+					'chapter.story.aliases',
+					'chapter.story.country',
+					'chapter.story.author.user',
+					'chapter.story.genres',
+					'chapter.story.prices',
+					'chapter.chapterImages',
 				],
 			});
-		let filteredResult = result.filter((item) => item.storyId !== null);
+		let filteredResult = result.filter((item) => item.chapterId !== null);
 		if (keyword) {
 			filteredResult = filteredResult.filter((item) =>
 				item.story?.author?.user?.name.includes(keyword),
@@ -89,7 +91,7 @@ export class ModerationRequestService {
 
 		const edges = resultPagination.map((item) => {
 			const encryptedUrl = this.urlCipherService.generate({
-				url: item.story ? item.story.coverImage : null,
+				url: item.chapter ? item.chapter.story.coverImage : null,
 				expireIn: 4 * 60 * 60, // Thời gian hết hạn là 4 giờ (tính bằng giây)
 				iat: Date.now(), // Thời điểm hiện tại (thời gian tạo)
 			}); // Mã hóa URL bằng dịch vụ urlCipherService
@@ -97,12 +99,28 @@ export class ModerationRequestService {
 				cursor: item.id,
 				node: {
 					...item, // Sao chép tất cả các thuộc tính của đối tượng ModerationRequest
-					story: {
-						...item.story, // Sao chép tất cả các thuộc tính của đối tượng Story
-						coverImage: UrlResolverUtils.createUrl(
-							'/url-resolver',
-							encryptedUrl,
-						), // Thay thế coverImage bằng URL đã mã hóa
+					chapter: {
+						...item.chapter, // Sao chép tất cả các thuộc tính của đối tượng Chapter
+						story: {
+							...item.chapter.story, // Sao chép tất cả các thuộc tính của đối tượng Story
+							coverImage: UrlResolverUtils.createUrl(
+								'/url-resolver',
+								encryptedUrl,
+							), // Thay thế coverImage bằng URL đã mã hóa
+						},
+						chapterImages: item.chapter.chapterImages
+							.map((image) => ({
+								path: UrlResolverUtils.createUrl(
+									'/url-resolver',
+									this.urlCipherService.generate({
+										url: image.path,
+										expireIn: 4 * 60 * 60,
+										iat: Date.now(),
+									}),
+								),
+								order: image.order,
+							}))
+							.sort((a, b) => a.order - b.order),
 					},
 				},
 			};

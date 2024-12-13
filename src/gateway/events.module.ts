@@ -10,6 +10,7 @@ import { Moderator } from '@/database/entities/Moderator';
 import { NotificationUserModule } from '../modules/notification-user/notification-user.module';
 import { NotificationModule } from '@/modules/notification/notification.module';
 import { FollowModule } from '@/modules/follow/follow.module';
+import { ChapterModule } from '@/modules/chapter/chapter.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { FollowModule } from '@/modules/follow/follow.module';
 		NotificationModule,
 		NotificationUserModule,
 		FollowModule,
+		ChapterModule,
 	],
 	providers: [ModerationGateway],
 	exports: [ModerationGateway],
