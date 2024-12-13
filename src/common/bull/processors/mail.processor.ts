@@ -50,4 +50,19 @@ export class MailProcessor {
     }
     return null;
   }
+
+  @Process(JobName.SEND_OTP_TO_VERIFY_CHANGE_PASSWORD)
+  async sendOtpToVerifyChangePassword(job: Job) {
+    try {
+      await this.redisClient.setEx(KeyGenerator.verifyChangePasswordInfoKey(job.data.accountId), 5 * 60, JSON.stringify({
+        oldPassword: job.data.oldPassword,
+        newPassword: job.data.newPassword,
+        otp: job.data.otp
+      }));
+      await this.mailService.sendOtpToVerifyChangePassword(job.data.otp, job.data.to);
+    } catch (error) {
+      console.log(error);
+    }
+    return null;
+  }
 }

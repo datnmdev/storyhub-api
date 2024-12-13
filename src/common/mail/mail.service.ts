@@ -44,4 +44,17 @@ export class MailService {
         }
       })
   }
+
+  async sendOtpToVerifyChangePassword(otp: string, to: string) {
+    return this.mailerService
+      .sendMail({
+        to,
+        from: 'no-reply@storyhub.com',
+        subject: 'Xác thực việc đổi mật khẩu tại storyhub',
+        template: './verify-change-password',
+        context: {
+          otp
+        }
+      })
+  }
 }

@@ -152,7 +152,9 @@ export class AppModule implements NestModule {
 				{
 					path: "file-upload/get-pre-upload-avatar-url",
 					method: RequestMethod.GET
-				}
+				},
+				"auth/verify-change-password-info",
+				"auth/change-password"
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(

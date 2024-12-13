@@ -19,6 +19,9 @@ const KeyGenerator = {
 	} ,
 	paymentStatusKey: (orderId: string) => {
 		return `payment:deposite-transaction:${orderId}`
+	},
+	verifyChangePasswordInfoKey: (userId: number) => {
+		return `change-password:verify-info:${userId}`
 	}
 };
 
