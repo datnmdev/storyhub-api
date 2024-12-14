@@ -2,6 +2,7 @@ import { Pagination } from "@/common/class/pagination.class";
 import { JsonToObject } from "@/common/decorators/transform.decorator";
 import { IsOrderBy } from "@/common/decorators/validation.decorator";
 import { OrderBy } from "@/common/types/typeorm.type";
+import { Invoice } from "@/modules/invoice/entities/invoice.entity";
 import { Exclude, Expose, Transform } from "class-transformer";
 import { IsInt, IsNumber, IsOptional, IsString } from "class-validator";
 
@@ -32,8 +33,8 @@ export class GetChapterWithFilterDto extends Pagination {
     ])
     @IsOptional()
     @IsOrderBy([
-        'created_at',
-        'updated_at',
+        'createdAt',
+        'updatedAt',
         'order',
         'id'
     ])
@@ -59,4 +60,10 @@ export class ChapterInfoPublicDto {
     
     @Expose()
     storyId: number
+}
+
+@Exclude()
+export class ChapterInfoPublicWithInvoiceRelationDto extends ChapterInfoPublicDto {
+    @Expose()
+    invoices: Invoice[]
 }
