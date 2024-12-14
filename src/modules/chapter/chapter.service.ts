@@ -14,6 +14,7 @@ import { IPaginatedType } from '@/pagination/paginated.decorator';
 import { Brackets } from 'typeorm';
 import {
 	ChapterInfoPublicDto,
+	ChapterInfoPublicWithInvoiceRelationDto,
 	GetChapterWithFilterDto,
 } from './dto/get-chapter-with-filter.dto';
 import { ChapterStatus } from '@/common/constants/chapter.constants';
@@ -42,7 +43,7 @@ export class ChapterService {
 		private readonly walletService: WalletService,
 		private readonly invoiceService: InvoiceService,
 		private readonly urlCipherService: UrlCipherService,
-	) {}
+	) { }
 	async create(createChapterDto: CreateChapterDto): Promise<Chapter> {
 		return this.chapterRepository.save(createChapterDto);
 	}
@@ -268,5 +269,67 @@ export class ChapterService {
 				id,
 			},
 		});
+	}
+
+	async getAllChaptersWithInvoiceRelation(userId: number, getChapterWithFilterDto: GetChapterWithFilterDto) {
+		const qb = this.chapterRepository
+			.createQueryBuilder('chapter')
+			.leftJoinAndSelect('chapter.invoices', 'invoices', 'invoices.chapter_id = chapter.id AND invoices.reader_id = :readerId', {
+				readerId: userId
+			})
+			.where(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.id) {
+						qb.where('chapter.id = :id', {
+							id: getChapterWithFilterDto.id,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.order) {
+						qb.where('chapter.order = :order', {
+							order: getChapterWithFilterDto.order,
+						});
+					}
+				}),
+			)
+			.andWhere(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.name) {
+						qb.where('chapter.name = :name', {
+							name: getChapterWithFilterDto.name,
+						});
+					}
+				}),
+			)
+			.andWhere('chapter.status = :status', {
+				status: ChapterStatus.PUBLISHING,
+			})
+			.andWhere(
+				new Brackets((qb) => {
+					if (getChapterWithFilterDto.storyId) {
+						qb.where('chapter.story_id = :storyId', {
+							storyId: getChapterWithFilterDto.storyId,
+						});
+					}
+				}),
+			);
+
+		if (getChapterWithFilterDto.orderBy) {
+			getChapterWithFilterDto.orderBy.forEach((value) => {
+				qb.addOrderBy(`chapter.${value[0]}`, value[1]);
+			});
+		}
+		qb.take(getChapterWithFilterDto.limit);
+		qb.skip(
+			(getChapterWithFilterDto.page - 1) * getChapterWithFilterDto.limit,
+		);
+		const chapters = await qb.getManyAndCount();
+		return [
+			plainToInstance(ChapterInfoPublicWithInvoiceRelationDto, chapters[0]),
+			chapters[1],
+		];
 	}
 }

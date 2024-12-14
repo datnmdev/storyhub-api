@@ -69,4 +69,11 @@ export class ChapterController {
   getChapterContent(@User() user: UserPayload, @Query() getChapterContentDto: GetChapterContentDto) {
 	return this.chapterService.getChapterContent(user, getChapterContentDto.chapterId);
   }
+
+  @Get('all/with-invoice-relation')
+  @Roles(Role.READER, Role.GUEST)
+  @UseGuards(RolesGuard)
+  getAllChaptersWithInvoiceRelation(@User('userId') userId: number, @Query() getChapterWithFilterDto: GetChapterWithFilterDto) {
+    return this.chapterService.getAllChaptersWithInvoiceRelation(userId, getChapterWithFilterDto);
+  }
 }

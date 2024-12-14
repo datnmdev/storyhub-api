@@ -133,6 +133,7 @@ export class AppModule implements NestModule {
 					method: RequestMethod.GET
 				},
 				"chapter/reader/content",
+				"chapter/all/with-invoice-relation",
 				{
 					path: "invoice",
 					method: RequestMethod.POST
