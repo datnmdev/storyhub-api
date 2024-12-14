@@ -1,13 +1,13 @@
+import { Chapter } from '@/database/entities/Chapter';
+import { Reader } from '@/modules/reader/entities/reader.entity';
 import {
 	Column,
 	Entity,
 	Generated,
 	Index,
 	JoinColumn,
-	ManyToOne
+	ManyToOne,
 } from 'typeorm';
-import { Chapter } from './Chapter';
-import { Reader } from './Reader';
 
 @Index('FK_history_reader_idx', ['readerId'], {})
 @Index('FK_history_chapter_idx', ['chapterId'], {})

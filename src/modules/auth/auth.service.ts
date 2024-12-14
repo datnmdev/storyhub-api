@@ -269,8 +269,6 @@ export class AuthService {
 					token: newToken
 				}
 				await this.redisClient.set(KeyGenerator.googleOauthStateKey(state), JSON.stringify(oAuthState), { KEEPTTL: true });
-				console.log(1);
-
 			} else {
 				const oAuthState: OAuthState = {
 					status: OAuthStatus.FAILED,

@@ -1,4 +1,5 @@
 import { ChapterImage } from "@/database/entities/ChapterImage";
+import { History } from "@/modules/reading-history/entities/reading-history.entity";
 import { Exclude, Expose, Transform } from "class-transformer";
 import { IsInt, IsNotEmpty } from "class-validator";
 
@@ -28,6 +29,9 @@ export class TextContentDto {
 
     @Expose()
     content: string
+
+    @Expose()
+    history: History
     
     @Expose()
     storyId: number
@@ -49,6 +53,9 @@ export class ImageContentDto {
 
     @Expose()
     updatedAt: Date
+
+    @Expose()
+    history: History
 
     @Expose()
     images: ChapterImage[]

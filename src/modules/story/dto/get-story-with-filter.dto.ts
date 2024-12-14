@@ -40,7 +40,7 @@ export class GetStoryWithFilterDto extends Pagination {
         StoryStatus.PUBLISHING,
         StoryStatus.FINISHED
     ])
-    status: number[]
+    status: number[] = [StoryStatus.PUBLISHING,StoryStatus.FINISHED]
 
     @Transform(({ value }) => Number(value))
     @IsOptional()
