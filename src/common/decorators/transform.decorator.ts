@@ -1,4 +1,4 @@
-import { Transform, TransformFnParams } from "class-transformer";
+import { Transform } from "class-transformer";
 
 export function JsonToObject<T = any>(defaultValue?: T) {
     return Transform(({ value }) => {

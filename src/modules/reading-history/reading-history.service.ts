@@ -1,12 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { Brackets, DataSource, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Story } from "@/database/entities/Story";
 import { plainToInstance } from "class-transformer";
 import UrlResolverUtils from "@/common/utils/url-resolver.util";
 import { UrlCipherPayload } from "@/common/url-cipher/url-cipher.class";
 import { UrlCipherService } from "@/common/url-cipher/url-cipher.service";
-import { ChapterInfoPublicDto } from "../chapter/dto/get-chapter-with-filter.dto";
 import { History } from "./entities/reading-history.entity";
 import { CreateReadingHistoryDto } from "./dto/create-reading-history.dto";
 import { UpdateReadingHistoryDto } from "./dto/update-reading-history.dto";
@@ -17,7 +16,6 @@ export class ReadingHistoryService {
     constructor(
         @InjectRepository(History)
         private readonly readingHistoryRepository: Repository<History>,
-        private readonly dataSource: DataSource,
         private readonly urlCipherService: UrlCipherService
     ) { }
 
@@ -32,30 +30,46 @@ export class ReadingHistoryService {
     updateReadingHistory(userId: number, updateReadingHistoryDto: UpdateReadingHistoryDto) {
         return this.readingHistoryRepository.update({
             readerId: userId,
-            chapterId: updateReadingHistoryDto.chapterId
+            chapterId: updateReadingHistoryDto.chapterId,
         }, {
-            position: updateReadingHistoryDto.position
+            position: updateReadingHistoryDto.position,
+            updatedAt: new Date()
         })
     }
 
-    deleteReadingHistoryByChapterId(userId: number, chapterId: number) {
-        return this.readingHistoryRepository.delete({
+    async deleteReadingHistoryByChapterId(userId: number, chapterId: number) {
+        const result = await this.readingHistoryRepository.delete({
             readerId: userId,
             chapterId
         })
+        if (result.affected > 0) {
+            return true;
+        }
+        return false;
     }
 
-    deleteReadingHistoryByStoryId(userId: number, storyId: number) {
-        return this.readingHistoryRepository
+    async deleteReadingHistoryByStoryId(userId: number, storyId: number) {
+        const histories = await this.readingHistoryRepository
             .createQueryBuilder('history')
             .innerJoin('history.chapter', 'chapter')
-            .where('history.reader_id = :readerId', {
-                readerId: userId
-            })
-            .andWhere('chapter.storyId = :storyId', {
-                storyId
-            })
-            .delete();
+            .select('history.id')
+            .where('history.reader_id = :readerId', { readerId: userId })
+            .andWhere('chapter.story_id = :storyId', { storyId })
+            .getMany();
+
+        if (histories.length > 0) {
+            const ids = histories.map(history => history.id);
+            const result = await this.readingHistoryRepository
+                .createQueryBuilder()
+                .delete()
+                .from('history')
+                .where('id IN (:...ids)', { ids })
+                .execute();
+            if (result.affected > 0) {
+                return true
+            }
+        }
+        return false;
     }
 
     async getReadingHistoryWithFilter(userId: number, getReadingHistoryWithFilterDto: GetReadingHistoryWithFilterDto) {
@@ -66,8 +80,8 @@ export class ReadingHistoryService {
             .where('history.reader_id = :readerId', {
                 readerId: userId
             })
-            .take(getReadingHistoryWithFilterDto.limit)
-            .skip((getReadingHistoryWithFilterDto.page - 1) * getReadingHistoryWithFilterDto.limit)
+            .orderBy('history.updatedAt', "DESC")
+            .addOrderBy('history.createdAt', "DESC")
             .getManyAndCount();
 
         const filteredStories: Story[] = [];
@@ -76,27 +90,33 @@ export class ReadingHistoryService {
                 filteredStories.push(history.chapter.story);
             }
         })
-        
+
         return [
-            filteredStories.map(story => {
-                return {
-                    ...story,
-                    coverImage: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
-                        url: story.coverImage,
-                        expireIn: 4 * 60 * 60,
-                        iat: Date.now()
-                    } as UrlCipherPayload))),
-                    histories: result[0].filter(history => history.chapter.storyId === story.id)
-                }
-            }),
-            result[1]
+            filteredStories
+                .slice((getReadingHistoryWithFilterDto.page - 1) * getReadingHistoryWithFilterDto.limit, getReadingHistoryWithFilterDto.limit * getReadingHistoryWithFilterDto.page)
+                .map(story => {
+                    return {
+                        ...story,
+                        coverImage: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
+                            url: story.coverImage,
+                            expireIn: 4 * 60 * 60,
+                            iat: Date.now()
+                        } as UrlCipherPayload))),
+                        histories: result[0]
+                            .filter(history => history.chapter.storyId === story.id)
+                    }
+                }),
+            filteredStories.length
         ];
     }
 
     async deleteAll(userId: number) {
-        await this.readingHistoryRepository.delete({
+        const result = await this.readingHistoryRepository.delete({
             readerId: userId
         })
-        return true;
+        if (result.affected > 0) {
+            return true;
+        }
+        return false;
     }
 }

@@ -33,14 +33,14 @@ export class ReadingHistoryController {
     @Delete('delete-by-chapter-id')
     @Roles(Role.READER)
     @UseGuards(RolesGuard)
-    deleteReadingHistoryByChapterId(@User('userId') userId: number, @Body() deleteReadingHistoryByChapterIdDto: DeleteReadingHistoryByChapterIdDto) {
+    deleteReadingHistoryByChapterId(@User('userId') userId: number, @Query() deleteReadingHistoryByChapterIdDto: DeleteReadingHistoryByChapterIdDto) {
         return this.readingHistoryService.deleteReadingHistoryByChapterId(userId, deleteReadingHistoryByChapterIdDto.chapterId);
     }
 
     @Delete('delete-by-story-id')
     @Roles(Role.READER)
     @UseGuards(RolesGuard)
-    deleteReadingHistoryByStoryId(@User('userId') userId: number, @Body() deleteReadingHistoryByStoryIdDto: DeleteReadingHistoryByStoryIdDto) {
+    deleteReadingHistoryByStoryId(@User('userId') userId: number, @Query() deleteReadingHistoryByStoryIdDto: DeleteReadingHistoryByStoryIdDto) {
         return this.readingHistoryService.deleteReadingHistoryByStoryId(userId, deleteReadingHistoryByStoryIdDto.storyId);
     }
 

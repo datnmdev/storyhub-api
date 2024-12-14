@@ -7,7 +7,6 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Index('FK_history_reader_idx', ['readerId'], {})
@@ -26,6 +25,12 @@ export class History {
 		default: () => 'CURRENT_TIMESTAMP',
 	})
 	createdAt: Date;
+
+	@Column('datetime', {
+		name: 'updated_at',
+		default: () => 'CURRENT_TIMESTAMP',
+	})
+	updatedAt: Date;
 
 	@Column('int', { primary: true, name: 'reader_id' })
 	readerId: number;

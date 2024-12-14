@@ -26,6 +26,12 @@ export class History {
 	})
 	createdAt: Date;
 
+	@Column('datetime', {
+		name: 'updated_at',
+		default: () => 'CURRENT_TIMESTAMP',
+	})
+	updatedAt: Date;
+
 	@Column('int', { primary: true, name: 'reader_id' })
 	readerId: number;
 

@@ -18,7 +18,6 @@ import {
 import { ChapterStatus } from '@/common/constants/chapter.constants';
 import { plainToInstance } from 'class-transformer';
 import { PriceService } from '../price/price.service';
-import { WalletService } from '../wallet/wallet.service';
 import { NotEnoughMoneyException } from '@/common/exceptions/NotEnoughMoneyException';
 import { InvoiceService } from '../invoice/invoice.service';
 import { StoryType } from '@/common/constants/story.constants';
@@ -28,6 +27,7 @@ import { UrlCipherService } from '@/common/url-cipher/url-cipher.service';
 import { UrlCipherPayload } from '@/common/url-cipher/url-cipher.class';
 import { User } from '@/@types/express';
 import { Role } from '@/common/constants/account.constants';
+import { History } from '../reading-history/entities/reading-history.entity';
 
 @Injectable()
 export class ChapterService {
@@ -37,6 +37,7 @@ export class ChapterService {
 		private readonly priceService: PriceService,
 		private readonly invoiceService: InvoiceService,
 		private readonly urlCipherService: UrlCipherService,
+		private readonly dataSource: DataSource
 	) { }
 	async create(createChapterDto: CreateChapterDto): Promise<Chapter> {
 		return this.chapterRepository.save(createChapterDto);
@@ -231,10 +232,22 @@ export class ChapterService {
 				}
 			}
 
+			// Lấy vị trí đọc truyện của người dùng
+			const history = await this.dataSource
+				.createQueryBuilder(History, 'history')
+				.where('history.reader_id = :readerId', {
+					readerId: user.userId
+				})
+				.andWhere('history.chapter_id = :chapterId', {
+					chapterId
+				})
+				.getOne();
+			
 			// Kiểm tra loại truyện và trả về nội dung chương
 			if (chapter.story.type === StoryType.COMIC) {
 				return plainToInstance(ImageContentDto, {
 					...chapter,
+					history,
 					images: chapter.chapterImages.map((chapterImage) => ({
 						...chapterImage,
 						path: UrlResolverUtils.createUrl(
@@ -250,7 +263,10 @@ export class ChapterService {
 					})),
 				} as ImageContentDto);
 			} else {
-				return plainToInstance(TextContentDto, chapter);
+				return plainToInstance(TextContentDto, {
+					...chapter,
+					history
+				});
 			}
 		} else {
 			throw new NotFoundException();
