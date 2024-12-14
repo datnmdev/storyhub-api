@@ -1,6 +1,4 @@
 import {
-	BadRequestException,
-	Inject,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
@@ -20,8 +18,6 @@ import {
 import { ChapterStatus } from '@/common/constants/chapter.constants';
 import { plainToInstance } from 'class-transformer';
 import { PriceService } from '../price/price.service';
-import { Invoice } from '../invoice/entities/invoice.entity';
-import { Wallet } from '../wallet/entities/Wallet.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotEnoughMoneyException } from '@/common/exceptions/NotEnoughMoneyException';
 import { InvoiceService } from '../invoice/invoice.service';
@@ -39,8 +35,6 @@ export class ChapterService {
 		@InjectRepository(Chapter)
 		private chapterRepository: Repository<Chapter>,
 		private readonly priceService: PriceService,
-		private readonly dataSource: DataSource,
-		private readonly walletService: WalletService,
 		private readonly invoiceService: InvoiceService,
 		private readonly urlCipherService: UrlCipherService,
 	) { }
@@ -318,6 +312,7 @@ export class ChapterService {
 			);
 
 		if (getChapterWithFilterDto.orderBy) {
+			
 			getChapterWithFilterDto.orderBy.forEach((value) => {
 				qb.addOrderBy(`chapter.${value[0]}`, value[1]);
 			});

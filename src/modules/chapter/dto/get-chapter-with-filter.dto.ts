@@ -33,8 +33,8 @@ export class GetChapterWithFilterDto extends Pagination {
     ])
     @IsOptional()
     @IsOrderBy([
-        'created_at',
-        'updated_at',
+        'createdAt',
+        'updatedAt',
         'order',
         'id'
     ])
