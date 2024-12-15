@@ -17,4 +17,7 @@ export class PaginateModerationReqDTO {
 	@IsString()
 	keyword?: string;
 
+	@IsNotEmpty()
+	@IsInt()
+	moderatorId: number;
 }

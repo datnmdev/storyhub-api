@@ -1,7 +1,4 @@
-import {
-	Injectable,
-	NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -125,19 +122,18 @@ export class ChapterService {
 
 	async update(updateChapterDto: UpdateChapterDto): Promise<Chapter> {
 		await this.findOne(updateChapterDto.id);
-		await this.chapterRepository.update(
-			updateChapterDto.id,
-			updateChapterDto,
-		);
+		await this.chapterRepository.update(updateChapterDto.id, {
+			...updateChapterDto,
+			updatedAt: new Date(),
+		});
 		return await this.findOne(updateChapterDto.id);
 	}
 
 	async remove(id: number): Promise<string> {
 		// Tìm chapter theo ID
 		const chapter = await this.findOne(id);
-		console.log(id);
 		// Cập nhật trạng thái chapter
-		await this.chapterRepository.update({ id: id }, { status: 6 });
+		await this.chapterRepository.update({ id: id }, { status: 4 });
 		return `This action removes a #${id} chapter`;
 	}
 
@@ -281,12 +277,20 @@ export class ChapterService {
 		});
 	}
 
-	async getAllChaptersWithInvoiceRelation(userId: number, getChapterWithFilterDto: GetChapterWithFilterDto) {
+	async getAllChaptersWithInvoiceRelation(
+		userId: number,
+		getChapterWithFilterDto: GetChapterWithFilterDto,
+	) {
 		const qb = this.chapterRepository
 			.createQueryBuilder('chapter')
-			.leftJoinAndSelect('chapter.invoices', 'invoices', 'invoices.chapter_id = chapter.id AND invoices.reader_id = :readerId', {
-				readerId: userId
-			})
+			.leftJoinAndSelect(
+				'chapter.invoices',
+				'invoices',
+				'invoices.chapter_id = chapter.id AND invoices.reader_id = :readerId',
+				{
+					readerId: userId,
+				},
+			)
 			.where(
 				new Brackets((qb) => {
 					if (getChapterWithFilterDto.id) {
@@ -328,7 +332,6 @@ export class ChapterService {
 			);
 
 		if (getChapterWithFilterDto.orderBy) {
-			
 			getChapterWithFilterDto.orderBy.forEach((value) => {
 				qb.addOrderBy(`chapter.${value[0]}`, value[1]);
 			});
@@ -339,7 +342,10 @@ export class ChapterService {
 		);
 		const chapters = await qb.getManyAndCount();
 		return [
-			plainToInstance(ChapterInfoPublicWithInvoiceRelationDto, chapters[0]),
+			plainToInstance(
+				ChapterInfoPublicWithInvoiceRelationDto,
+				chapters[0],
+			),
 			chapters[1],
 		];
 	}

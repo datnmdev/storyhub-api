@@ -206,7 +206,6 @@ export class ModerationGateway
 			// Gửi thông báo tới tác giả
 			this.server.emit(
 				'story_handled',
-				story,
 				handleModerationRequest.reason,
 			);
 

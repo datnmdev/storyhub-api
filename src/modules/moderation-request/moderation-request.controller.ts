@@ -12,7 +12,7 @@ import { ModerationRequestService } from './moderation-request.service';
 import { CreateModerationRequestDto } from './dto/create-moderation-request.dto';
 import { ModerationRequest } from '@/database/entities/ModerationRequest';
 import { IPaginatedType } from '@/pagination/paginated.decorator';
-import { PaginateStoriesDTO } from '@/pagination/paginated-stories.dto';
+import { PaginateModerationReqDTO } from '@/pagination/paginated-moderation-req.dto';
 
 @Controller('moderation-request')
 export class ModerationRequestController {
@@ -33,7 +33,7 @@ export class ModerationRequestController {
 	findAllModerationReq(
 		@Query() paginationQuery: any,
 	): Promise<IPaginatedType<ModerationRequest>> {
-		const paginationDto = new PaginateStoriesDTO();
+		const paginationDto = new PaginateModerationReqDTO();
 		Object.assign(paginationDto, paginationQuery);
 		return this.moderationRequestService.findAll(paginationDto);
 	}

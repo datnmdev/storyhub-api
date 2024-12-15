@@ -23,8 +23,8 @@ export class StoryService {
 		@InjectRepository(Genre)
 		private readonly genreRepository: Repository<Genre>,
 		private readonly urlCipherService: UrlCipherService,
-		private readonly dataSource: DataSource
-	) { }
+		private readonly dataSource: DataSource,
+	) {}
 
 	async create(createStoryDto: CreateStoryDto): Promise<Story> {
 		const genres = await this.genreRepository.findByIds(
@@ -50,7 +50,7 @@ export class StoryService {
 			...(authorId ? { authorId: authorId } : {}),
 			...(keyword ? { title: Like(`%${keyword}%`) } : {}),
 			...(type ? { type: type } : {}),
-			status: status !== undefined && status !== null ? status : Not(6),
+			status: status !== undefined && status !== null ? status : Not(4),
 		};
 
 		const [result, totalCount] = await this.storyRepository.findAndCount({
@@ -160,7 +160,7 @@ export class StoryService {
 		// 	await this.genreRepository.save(genres);
 		// }
 
-		const { genres,price,alias, ...updateData } = updateStoryDto;
+		const { genres, price, alias, ...updateData } = updateStoryDto;
 		await this.storyRepository.update(updateStoryDto.id, updateData);
 
 		return await this.findOne(updateStoryDto.id);
@@ -172,7 +172,7 @@ export class StoryService {
 		const story = await this.findOne(id);
 
 		// Cập nhật trạng thái story
-		await this.storyRepository.update({ id: id }, { status: 6 });
+		await this.storyRepository.update({ id: id }, { status: 4 });
 
 		return `This action removes a #${id} story`;
 	}
@@ -181,93 +181,123 @@ export class StoryService {
 	async getStoryWithFilter(getStoryWithFilterDto: GetStoryWithFilterDto) {
 		if (getStoryWithFilterDto.genres) {
 			const qb = this.storyRepository
-				.createQueryBuilder("story")
-				.innerJoin("story.genres", 'genre', getStoryWithFilterDto.genres.map(genreId => `genre.id = ${genreId}`).join(' OR '))
-				.groupBy("story.id")
-				.select([
-					"story.*",
-				])
-				.addSelect("COUNT(*)", "genreCount")
-				.having("genreCount = :genreCount", {
+				.createQueryBuilder('story')
+				.innerJoin(
+					'story.genres',
+					'genre',
+					getStoryWithFilterDto.genres
+						.map((genreId) => `genre.id = ${genreId}`)
+						.join(' OR '),
+				)
+				.groupBy('story.id')
+				.select(['story.*'])
+				.addSelect('COUNT(*)', 'genreCount')
+				.having('genreCount = :genreCount', {
 					genreCount: getStoryWithFilterDto.genres.length,
 				})
-				.andWhere(new Brackets(qb => {
-					if (getStoryWithFilterDto.id) {
-						qb.where("story.id = :id", {
-							id: getStoryWithFilterDto.id
-						})
-					}
-				}))
-				.andWhere(new Brackets(qb => {
-					if (getStoryWithFilterDto.title) {
-						qb.where("story.title = :title", {
-							title: getStoryWithFilterDto.title
-						})
-					}
-				}))
-				.andWhere(new Brackets(qb => {
-					if (getStoryWithFilterDto.type) {
-						getStoryWithFilterDto.type.forEach((type, index) => {
-							qb.orWhere(`story.type = :type${index}`, {
-								[`type${index}`]: type
-							})
-						})
-					}
-				}))
-				.andWhere(new Brackets(qb => {
-					if (getStoryWithFilterDto.status) {
-						getStoryWithFilterDto.status.forEach((status, index) => {
-							qb.orWhere(`story.status = :status${index}`, {
-								[`status${index}`]: status
-							})
-						})
-					}
-				}))
-				.andWhere(new Brackets(qb => {
-					if (getStoryWithFilterDto.countryId) {
-						qb.where("story.country_id = :country_id", {
-							country_id: getStoryWithFilterDto.countryId
-						})
-					}
-				}))
-				.andWhere(new Brackets(qb => {
-					if (getStoryWithFilterDto.authorId) {
-						qb.where("story.author_id = :author_id", {
-							author_id: getStoryWithFilterDto.authorId
-						})
-					}
-				}));
+				.andWhere(
+					new Brackets((qb) => {
+						if (getStoryWithFilterDto.id) {
+							qb.where('story.id = :id', {
+								id: getStoryWithFilterDto.id,
+							});
+						}
+					}),
+				)
+				.andWhere(
+					new Brackets((qb) => {
+						if (getStoryWithFilterDto.title) {
+							qb.where('story.title = :title', {
+								title: getStoryWithFilterDto.title,
+							});
+						}
+					}),
+				)
+				.andWhere(
+					new Brackets((qb) => {
+						if (getStoryWithFilterDto.type) {
+							getStoryWithFilterDto.type.forEach(
+								(type, index) => {
+									qb.orWhere(`story.type = :type${index}`, {
+										[`type${index}`]: type,
+									});
+								},
+							);
+						}
+					}),
+				)
+				.andWhere(
+					new Brackets((qb) => {
+						if (getStoryWithFilterDto.status) {
+							getStoryWithFilterDto.status.forEach(
+								(status, index) => {
+									qb.orWhere(
+										`story.status = :status${index}`,
+										{
+											[`status${index}`]: status,
+										},
+									);
+								},
+							);
+						}
+					}),
+				)
+				.andWhere(
+					new Brackets((qb) => {
+						if (getStoryWithFilterDto.countryId) {
+							qb.where('story.country_id = :country_id', {
+								country_id: getStoryWithFilterDto.countryId,
+							});
+						}
+					}),
+				)
+				.andWhere(
+					new Brackets((qb) => {
+						if (getStoryWithFilterDto.authorId) {
+							qb.where('story.author_id = :author_id', {
+								author_id: getStoryWithFilterDto.authorId,
+							});
+						}
+					}),
+				);
 
 			if (getStoryWithFilterDto.orderBy) {
-				getStoryWithFilterDto.orderBy.forEach(value => {
+				getStoryWithFilterDto.orderBy.forEach((value) => {
 					qb.addOrderBy(`story.${value[0]}`, value[1]);
-				})
+				});
 			}
-			qb.limit(getStoryWithFilterDto.limit)
-			qb.offset((getStoryWithFilterDto.page - 1) * getStoryWithFilterDto.limit);
+			qb.limit(getStoryWithFilterDto.limit);
+			qb.offset(
+				(getStoryWithFilterDto.page - 1) * getStoryWithFilterDto.limit,
+			);
 			const stories = await qb.getRawMany();
 			return [
-				stories.map(story => {
+				stories.map((story) => {
 					return {
 						id: story.id,
 						title: story.title,
 						description: story.description,
 						note: story.note,
-						coverImage: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
-							url: story.cover_image,
-							expireIn: 4 * 60 * 60,
-							iat: Date.now()
-						} as UrlCipherPayload))),
+						coverImage: UrlResolverUtils.createUrl(
+							'/url-resolver',
+							this.urlCipherService.generate(
+								plainToInstance(UrlCipherPayload, {
+									url: story.cover_image,
+									expireIn: 4 * 60 * 60,
+									iat: Date.now(),
+								} as UrlCipherPayload),
+							),
+						),
 						type: story.type,
 						status: story.status,
 						createdAt: story.created_at,
 						updatedAt: story.updated_at,
 						countryId: story.country_id,
-						authorId: story.author_id
-					}
+						authorId: story.author_id,
+					};
 				}),
-				stories.length
-			]
+				stories.length,
+			];
 		}
 
 		const qb = this.storyRepository
@@ -380,31 +410,38 @@ export class StoryService {
 			.innerJoinAndSelect('story.country', 'country')
 			.innerJoinAndSelect('author.user', 'user')
 			.where(
-				new Brackets(qb => {
+				new Brackets((qb) => {
 					qb.where(`MATCH (story.title) AGAINST (:title)`, {
-						title: keyword
-					})
-				})
+						title: keyword,
+					});
+				}),
 			)
 			.andWhere(
-				new Brackets(qb => {
-					qb.where('story.status = :status1', { status1: StoryStatus.PUBLISHING })
-						.orWhere('story.status = :status2', { status2: StoryStatus.FINISHED });
-				})
+				new Brackets((qb) => {
+					qb.where('story.status = :status1', {
+						status1: StoryStatus.PUBLISHING,
+					}).orWhere('story.status = :status2', {
+						status2: StoryStatus.FINISHED,
+					});
+				}),
 			)
 			.getManyAndCount();
 
 		return [
-			results[0].map(story => ({
+			results[0].map((story) => ({
 				...story,
-				coverImage: UrlResolverUtils.createUrl('/url-resolver', this.urlCipherService.generate(plainToInstance(UrlCipherPayload, {
-					url: story.coverImage,
-					expireIn: 4 * 60 * 60,
-					iat: Date.now()
-				} as UrlCipherPayload)))
+				coverImage: UrlResolverUtils.createUrl(
+					'/url-resolver',
+					this.urlCipherService.generate(
+						plainToInstance(UrlCipherPayload, {
+							url: story.coverImage,
+							expireIn: 4 * 60 * 60,
+							iat: Date.now(),
+						} as UrlCipherPayload),
+					),
+				),
 			})),
-			results[1]
-		]
+			results[1],
+		];
 	}
-
 }

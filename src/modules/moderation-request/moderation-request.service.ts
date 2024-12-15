@@ -31,12 +31,12 @@ export class ModerationRequestService {
 		const skip = (page - 1) * take;
 		const keyword = query.keyword?.trim() || '';
 		const type = query.type;
+		const moderatorId = query.moderatorId;
 		// Điều kiện tìm kiếm
 		let whereCondition = {
 			...(type ? { type: type } : {}),
 			status: 0,
 		};
-		console.log(type);
 
 		const [result, totalCount] =
 			await this.moderationReqRepository.findAndCount({
@@ -65,7 +65,7 @@ export class ModerationRequestService {
 					'chapter.chapterImages',
 				],
 			});
-		let filteredResult = result.filter((item) => item.chapterId !== null);
+		let filteredResult = result.filter((item) => item.chapterId !== null && item.responserId === +moderatorId);
 		if (keyword) {
 			filteredResult = filteredResult.filter((item) =>
 				item.story?.author?.user?.name.includes(keyword),
