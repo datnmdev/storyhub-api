@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ChapterImage } from '@/database/entities/ChapterImage';
 import { Repository } from 'typeorm';
 import { FileUploadService } from '../file-upload/file-upload.service';
-import { DeleteChapterImageDto } from './dto/delete-chapter-image.dto';
 import { UrlCipherPayload } from '@/common/url-cipher/url-cipher.class';
 import { UrlCipherService } from '@/common/url-cipher/url-cipher.service';
 import UrlResolverUtils from '@/common/utils/url-resolver.util';
@@ -65,9 +64,14 @@ export class ChapterImageService {
 		return 'Cập nhật hình ảnh chương thành công';
 	}
 
-	async remove(chapterImage: DeleteChapterImageDto): Promise<string> {
-		await this.chapterImageRepository.delete(chapterImage.id);
-		await this.fileUploadService.deleteFile(chapterImage.fileName);
-		return `Removed chapter image`;
+	async remove(id: number): Promise<string> {
+		const chapterImage = await this.findOne(id);
+		if (chapterImage.path.startsWith('@internal:aws-s3:')) {
+			await this.fileUploadService.deleteFile(
+				chapterImage.path.replace('@internal:aws-s3:', ''),
+			);
+		}
+		await this.chapterImageRepository.delete(id);
+		return `This action removes a #${id} chapter image`;
 	}
 }

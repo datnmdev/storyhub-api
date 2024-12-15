@@ -13,7 +13,6 @@ import { ChapterImageService } from './chapter-image.service';
 import { CreateChapterImageDto } from './dto/create-chapter-image.dto';
 import { UpdateChapterImageDto } from './dto/update-chapter-image.dto';
 import { ChapterImage } from '@/database/entities/ChapterImage';
-import { DeleteChapterImageDto } from './dto/delete-chapter-image.dto';
 
 @Controller('chapter-image')
 export class ChapterImageController {
@@ -45,8 +44,8 @@ export class ChapterImageController {
 		return await this.chapterImageService.update(updateChapterImageDto);
 	}
 
-	@Post('delete')
-	async remove(@Body() chapterImage: DeleteChapterImageDto): Promise<string> {
-		return await this.chapterImageService.remove(chapterImage);
+	@Delete(':id')
+	async removeStory(@Param('id') id: string) {
+		return this.chapterImageService.remove(+id);
 	}
 }
