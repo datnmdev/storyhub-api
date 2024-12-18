@@ -131,11 +131,6 @@ export class FollowService {
     }
 
     async getFollowWithFilter(userId: number, getFollowWithFilterDto: GetFollowWithFilterDto) {
-        try {
-            
-        } catch (error) {
-            
-        }
         const results = await this.followRepository
             .createQueryBuilder('follow')
             .innerJoinAndSelect('follow.story', 'story')
