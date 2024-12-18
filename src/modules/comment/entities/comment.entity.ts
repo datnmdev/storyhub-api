@@ -1,3 +1,8 @@
+import { Chapter } from '@/database/entities/Chapter';
+import { CommentInteraction } from '@/database/entities/CommentInteraction';
+import { Notification } from '@/database/entities/Notification';
+import { Story } from '@/database/entities/Story';
+import { Reader } from '@/modules/reader/entities/reader.entity';
 import {
 	Column,
 	Entity,
@@ -7,11 +12,6 @@ import {
 	OneToMany,
 	PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Chapter } from './Chapter';
-import { Reader } from './Reader';
-import { Story } from './Story';
-import { CommentInteraction } from './CommentInteraction';
-import { Notification } from './Notification';
 
 @Index('FK_comment_reader_idx', ['readerId'], {})
 @Index('FK_comment_commentparent_idx', ['parentId'], {})

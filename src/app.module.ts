@@ -40,6 +40,8 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { ModeratorModule } from './modules/moderator/moderator.module';
 import { ReadingHistoryModule } from './modules/reading-history/reading-history.module';
+import { CommentModule } from './modules/comment/comment.module';
+import { InteractionModule } from './modules/Interaction/interaction.module';
 @Module({
 	imports: [
 		ConfigModule,
@@ -84,7 +86,9 @@ import { ReadingHistoryModule } from './modules/reading-history/reading-history.
 		InvoiceModule,
 		StatisticModule,
 		ModeratorModule,
-		ReadingHistoryModule
+		ReadingHistoryModule,
+		CommentModule,
+		InteractionModule
 	],
 })
 export class AppModule implements NestModule {
@@ -158,7 +162,35 @@ export class AppModule implements NestModule {
 				},
 				"auth/verify-change-password-info",
 				"auth/change-password",
-				'reading-history'
+				"reading-history",
+				{
+					path: "comment",
+					method: RequestMethod.POST
+				},
+				{
+					path: "comment",
+					method: RequestMethod.PUT
+				},
+				{
+					path: "comment/:id",
+					method: RequestMethod.DELETE
+				},
+				{
+					path: "interaction",
+					method: RequestMethod.GET
+				},
+				{
+					path: "interaction",
+					method: RequestMethod.POST
+				},
+				{
+					path: "interaction",
+					method: RequestMethod.PUT
+				},
+				{
+					path: "interaction",
+					method: RequestMethod.DELETE
+				}
 			)
 			.apply(VerifyUrlValidityMiddleware)
 			.forRoutes(

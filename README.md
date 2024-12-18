@@ -32,7 +32,6 @@
 ### Lưu ý:
 
 - Trên các nhánh feature hãy dùng git rebase -i để làm sạch lịch sử commit trên nhánh trước khi thực hiện merge vào nhánh dev và khi merge phải merge theo kiểu non-fast-forward để tránh lịch sử commit trên nhánh bị nhiễu bằng cách sử dụng lệnh "git merge <tên_nhánh_feature_muốn_gộp> --no-ff"
-- Vẫn phải thực hiện push các nhánh feature lên github.
 
 ### Run project
 
