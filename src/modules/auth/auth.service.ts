@@ -43,7 +43,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UrlPrefix } from '@/common/constants/url-resolver.constants';
-import { Wallet } from '../wallet/entities/Wallet.entity';
+import { Wallet } from '../wallet/entities/wallet.entity';
 import { VerifyChangePasswordInfoDto } from './dto/verify-change-password-info.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 

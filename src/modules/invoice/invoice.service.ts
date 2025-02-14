@@ -7,7 +7,7 @@ import { PriceService } from "../price/price.service";
 import { ChapterService } from "../chapter/chapter.service";
 import { WalletService } from "../wallet/wallet.service";
 import { plainToClass } from "class-transformer";
-import { Wallet } from "../wallet/entities/Wallet.entity";
+import { Wallet } from "../wallet/entities/wallet.entity";
 import { NotEnoughMoneyException } from "@/common/exceptions/NotEnoughMoneyException";
 import { StoryService } from "../story/story.service";
 

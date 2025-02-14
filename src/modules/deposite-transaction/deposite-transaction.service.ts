@@ -16,7 +16,7 @@ import { plainToInstance } from "class-transformer";
 import { DepositeTransactionStatus } from "@/common/constants/deposite-transaction.constants";
 import { PaymentStatus } from "@/common/constants/vnpay.constants";
 import { WalletService } from "../wallet/wallet.service";
-import { Wallet } from "../wallet/entities/Wallet.entity";
+import { Wallet } from "../wallet/entities/wallet.entity";
 import FileLoaderUtils from "@/common/utils/file-loader.util";
 import KeyGenerator from "@/common/utils/generate-key.util";
 import { GetPaymentStatusDto } from "./dto/get-payment-status.dto";
